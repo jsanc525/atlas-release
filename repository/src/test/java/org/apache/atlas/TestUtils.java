@@ -18,13 +18,38 @@
 
 package org.apache.atlas;
 
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createStructTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createTraitTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createUniqueRequiredAttrDef;
-import static org.testng.Assert.assertEquals;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Provider;
+import org.apache.atlas.listener.EntityChangeListener;
+import org.apache.atlas.listener.TypesChangeListener;
+import org.apache.atlas.repository.MetadataRepository;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
+import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
+import org.apache.atlas.repository.graph.GraphHelper;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
+import org.apache.atlas.repository.typestore.ITypeStore;
+import org.apache.atlas.services.DefaultMetadataService;
+import org.apache.atlas.services.MetadataService;
+import org.apache.atlas.type.AtlasTypeRegistry;
+import org.apache.atlas.typesystem.IInstance;
+import org.apache.atlas.typesystem.ITypedReferenceableInstance;
+import org.apache.atlas.typesystem.Referenceable;
+import org.apache.atlas.typesystem.TypesDef;
+import org.apache.atlas.typesystem.json.InstanceSerialization;
+import org.apache.atlas.typesystem.persistence.Id;
+import org.apache.atlas.typesystem.types.*;
+import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
+import org.apache.atlas.typesystem.types.cache.DefaultTypeCache;
+import org.apache.atlas.typesystem.types.cache.TypeCache;
+import org.apache.atlas.typesystem.types.utils.TypesUtil;
+import org.apache.atlas.util.AtlasRepositoryConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.RandomStringUtils;
+import org.codehaus.jettison.json.JSONArray;
+import org.testng.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,50 +70,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.atlas.listener.EntityChangeListener;
-import org.apache.atlas.listener.TypesChangeListener;
-import org.apache.atlas.repository.MetadataRepository;
-import org.apache.atlas.repository.graph.AtlasGraphProvider;
-import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
-import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
-import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AtlasGraph;
-import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
-import org.apache.atlas.repository.typestore.ITypeStore;
-import org.apache.atlas.services.DefaultMetadataService;
-import org.apache.atlas.services.MetadataService;
-import org.apache.atlas.type.AtlasTypeRegistry;
-import org.apache.atlas.typesystem.IInstance;
-import org.apache.atlas.typesystem.ITypedReferenceableInstance;
-import org.apache.atlas.typesystem.Referenceable;
-import org.apache.atlas.typesystem.TypesDef;
-import org.apache.atlas.typesystem.json.InstanceSerialization;
-import org.apache.atlas.typesystem.persistence.Id;
-import org.apache.atlas.typesystem.types.AttributeDefinition;
-import org.apache.atlas.typesystem.types.AttributeInfo;
-import org.apache.atlas.typesystem.types.ClassType;
-import org.apache.atlas.typesystem.types.DataTypes;
-import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
-import org.apache.atlas.typesystem.types.EnumTypeDefinition;
-import org.apache.atlas.typesystem.types.EnumValue;
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
-import org.apache.atlas.typesystem.types.IDataType;
-import org.apache.atlas.typesystem.types.Multiplicity;
-import org.apache.atlas.typesystem.types.StructTypeDefinition;
-import org.apache.atlas.typesystem.types.TraitType;
-import org.apache.atlas.typesystem.types.TypeSystem;
-import org.apache.atlas.typesystem.types.cache.DefaultTypeCache;
-import org.apache.atlas.typesystem.types.cache.TypeCache;
-import org.apache.atlas.typesystem.types.utils.TypesUtil;
-import org.apache.atlas.util.AtlasRepositoryConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.RandomStringUtils;
-import org.codehaus.jettison.json.JSONArray;
-import org.testng.Assert;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Provider;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Test utility class.

@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasErrorCode;
 import org.apache.atlas.BaseRepositoryTest;
-import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.discovery.EntityLineageService;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.model.instance.AtlasEntity.Status;
@@ -30,6 +29,7 @@ import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.atlas.model.lineage.AtlasLineageInfo;
 import org.apache.atlas.model.lineage.AtlasLineageInfo.LineageRelation;
 import org.apache.atlas.model.lineage.AtlasLineageInfo.LineageDirection;
+import org.apache.atlas.TestOnlyModule;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.commons.collections.ArrayStack;
@@ -47,12 +47,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * Unit tests for the new v2 Instance LineageService.
  */
-@Guice(modules = RepositoryMetadataModule.class)
+@Guice(modules = TestOnlyModule.class)
 public class EntityLineageServiceTest extends BaseRepositoryTest {
 
     @Inject

@@ -19,7 +19,7 @@ package org.apache.atlas.repository.impexp;
 
 
 import com.google.inject.Inject;
-import org.apache.atlas.RepositoryMetadataModule;
+import org.apache.atlas.TestOnlyModule;
 import org.apache.atlas.TestUtilsV2;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.model.impexp.AtlasExportRequest;
@@ -35,10 +35,10 @@ import org.apache.atlas.repository.store.graph.v1.DeleteHandlerV1;
 import org.apache.atlas.repository.store.graph.v1.SoftDeleteHandlerV1;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasTypeRegistry;
-import org.testng.Assert;
-import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.powermock.reflect.Whitebox;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Guice;
@@ -59,7 +59,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-@Guice(modules = RepositoryMetadataModule.class)
+@Guice(modules = TestOnlyModule.class)
 public class ExportServiceTest {
     private static final Logger LOG = LoggerFactory.getLogger(ExportServiceTest.class);
 

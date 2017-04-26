@@ -350,7 +350,7 @@
             <scope>test</scope>
         </dependency>
 
-	 <dependency>
+        <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>3.9</version>
