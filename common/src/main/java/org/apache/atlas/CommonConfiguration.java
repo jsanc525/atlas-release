@@ -17,14 +17,22 @@
  */
 package org.apache.atlas;
 
-import org.apache.atlas.graph.GraphSandboxUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-public class TestOnlyModule extends RepositoryMetadataModule {
-    @Override
-    protected void configure() {
-        GraphSandboxUtil.create();
+@Configuration
+public class CommonConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonConfiguration.class);
 
-        // Configure extra stuff for test DI here
-        super.configure();
+    @Bean
+    public org.apache.commons.configuration.Configuration getAtlasConfig() throws AtlasException {
+        try {
+            return ApplicationProperties.get();
+        } catch (AtlasException e) {
+            LOGGER.warn("AtlasConfig init failed", e);
+            throw e;
+        }
     }
 }

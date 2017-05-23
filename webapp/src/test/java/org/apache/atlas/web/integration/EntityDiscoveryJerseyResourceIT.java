@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.atlas.web.resources;
+package org.apache.atlas.web.integration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -54,7 +54,7 @@ public class EntityDiscoveryJerseyResourceIT extends BaseResourceIT {
     @BeforeClass
     public void setUp() throws Exception {
         super.setUp();
-        dbName = "database" + randomString();
+        dbName = "db" + randomString();
         createTypes();
         createInstance(createHiveDBInstanceBuiltIn(dbName));
     }
@@ -142,22 +142,6 @@ public class EntityDiscoveryJerseyResourceIT extends BaseResourceIT {
         assertNotNull(dbEntity.getGuid());
         assertNull(searchResult.getAttributes());
         assertNull(searchResult.getFullTextResult());
-    }
-
-    @Test
-    public void testLikeSearchUsingDSL() throws Exception {
-        String dslQuery = DATABASE_TYPE_BUILTIN + " where " + QUALIFIED_NAME + " like \"da?a*\"";
-
-        AtlasSearchResult searchResult = atlasClientV2.dslSearch(dslQuery);
-        assertNotNull(searchResult);
-
-        List<AtlasEntityHeader> entities = searchResult.getEntities();
-        assertNotNull(entities);
-        assertEquals(entities.size(), 1);
-
-        AtlasEntityHeader dbEntity = entities.get(0);
-        assertEquals(dbEntity.getTypeName(), DATABASE_TYPE_BUILTIN);
-        assertEquals(dbEntity.getDisplayText(), dbName);
     }
 
     @Test

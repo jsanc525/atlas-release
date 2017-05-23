@@ -31,7 +31,6 @@ import org.apache.atlas.model.instance.ClassificationAssociateRequest;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.instance.EntityMutations;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
-import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.store.bootstrap.AtlasTypeDefStoreInitializer;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasType;
@@ -41,7 +40,6 @@ import org.apache.atlas.web.rest.EntityREST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Guice;
@@ -101,11 +99,6 @@ public class TestEntitiesREST {
     public void cleanup() throws Exception {
         RequestContext.clear();
         RequestContextV1.clear();
-    }
-
-    @AfterClass
-    public void tearDown() throws Exception {
-        AtlasGraphProvider.cleanup();
     }
 
     @Test

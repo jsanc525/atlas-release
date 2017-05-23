@@ -29,7 +29,6 @@ import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.instance.EntityMutations;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
-import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasTypeUtil;
 import org.apache.atlas.web.rest.EntityREST;
@@ -71,7 +70,7 @@ public class TestEntityREST {
 
     @AfterClass
     public void tearDown() throws Exception {
-        AtlasGraphProvider.cleanup();
+//        AtlasGraphProvider.cleanup();
     }
 
     @AfterMethod
