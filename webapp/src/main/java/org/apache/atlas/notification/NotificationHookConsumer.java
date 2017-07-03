@@ -225,8 +225,9 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
 
             while (shouldRun.get()) {
                 try {
-                    List<AtlasKafkaMessage<HookNotificationMessage>> messages = consumer.receive(1000L);
-                    for (AtlasKafkaMessage<HookNotificationMessage> msg :  messages){
+                    List<AtlasKafkaMessage<HookNotificationMessage>> messages = consumer.receive();
+
+                    for (AtlasKafkaMessage<HookNotificationMessage> msg : messages) {
                         handleMessage(msg);
                     }
                 } catch (Throwable t) {
