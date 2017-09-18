@@ -352,3 +352,4 @@ BUG-77993: upgrade frontend-maven-plugin to latest
 HOTFIX-1784 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
 ATLAS-2276: update Hive hook to add an option to retain case-sensitivity of path in hdfs_path entities
 ATLAS-2442:- Fix for read-only permission to allow read entity when http method is POST
+HOTFIX-1862 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
