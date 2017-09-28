@@ -34,6 +34,7 @@ import org.apache.atlas.typesystem.types.TraitType;
 import org.apache.atlas.typesystem.types.utils.TypesUtil;
 import org.apache.atlas.web.resources.BaseResourceIT;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Guice;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;

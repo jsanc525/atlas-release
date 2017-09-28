@@ -19,6 +19,8 @@ package org.apache.atlas.notification;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Singleton;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.AtlasServiceException;

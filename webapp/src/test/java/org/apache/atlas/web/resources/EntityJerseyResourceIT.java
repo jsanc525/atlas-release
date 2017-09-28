@@ -35,6 +35,7 @@ import javax.ws.rs.core.Response;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasServiceException;
 import org.apache.atlas.EntityAuditEvent;
+import org.apache.atlas.kafka.NotificationProvider;
 import org.apache.atlas.model.instance.GuidMapping;
 import org.apache.atlas.notification.NotificationConsumer;
 import org.apache.atlas.notification.NotificationInterface;
