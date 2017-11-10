@@ -44,8 +44,8 @@
     "requirejs": "2.3.3",
     "requirejs-text": "2.0.15",
     "select2": "4.0.3",
-    "underscore": "1.8.3",
-    "js-beautify": "1.6.14"
+    "table-dragger": "^1.0.2",
+    "underscore": "1.8.3"
   },
   "devDependencies": {
     "grunt": "^1.0.1",
