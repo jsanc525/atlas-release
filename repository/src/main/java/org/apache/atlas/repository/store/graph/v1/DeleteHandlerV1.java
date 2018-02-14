@@ -59,14 +59,16 @@ public abstract class DeleteHandlerV1 {
 
     public static final Logger LOG = LoggerFactory.getLogger(DeleteHandlerV1.class);
 
-    private AtlasTypeRegistry typeRegistry;
-    private boolean shouldUpdateInverseReferences;
-    private boolean softDelete;
+    private AtlasTypeRegistry      typeRegistry;
+    private EntityGraphRetriever   entityGraphRetriever;
+    private boolean                shouldUpdateInverseReferences;
+    private boolean                softDelete;
 
     protected static final GraphHelper graphHelper = GraphHelper.getInstance();
 
     public DeleteHandlerV1(AtlasTypeRegistry typeRegistry, boolean shouldUpdateInverseReference, boolean softDelete) {
         this.typeRegistry = typeRegistry;
+        this.entityGraphRetriever = new EntityGraphRetriever(typeRegistry);
         this.shouldUpdateInverseReferences = shouldUpdateInverseReference;
         this.softDelete = softDelete;
     }
@@ -96,7 +98,7 @@ public abstract class DeleteHandlerV1 {
             String typeName = AtlasGraphUtilsV1.getTypeName(instanceVertex);
             AtlasObjectId objId = new AtlasObjectId(guid, typeName);
 
-            if (requestContext.getDeletedEntityIds().contains(objId)) {
+            if (requestContext.isDeletedEntity(objId.getGuid())) {
                 LOG.debug("Skipping deletion of {} as it is already deleted", guid);
                 continue;
             }
@@ -107,7 +109,9 @@ public abstract class DeleteHandlerV1 {
             // Record all deletion candidate GUIDs in RequestContext
             // and gather deletion candidate vertices.
             for (GraphHelper.VertexInfo vertexInfo : compositeVertices) {
-                requestContext.recordEntityDelete(new AtlasObjectId(vertexInfo.getGuid(), vertexInfo.getTypeName()));
+                AtlasEntity atlasEntity = entityGraphRetriever.toAtlasEntity(vertexInfo.getGuid());
+                requestContext.cache(atlasEntity);
+                requestContext.recordEntityDelete(new AtlasObjectId(atlasEntity.getGuid(), atlasEntity.getTypeName()));
                 deletionCandidateVertices.add(vertexInfo.getVertex());
             }
         }
@@ -407,7 +411,7 @@ public abstract class DeleteHandlerV1 {
         AtlasObjectId objId = new AtlasObjectId(outId, typeName);
         AtlasEntity.Status state = AtlasGraphUtilsV1.getState(outVertex);
 
-        if (state == AtlasEntity.Status.DELETED || (outId != null && RequestContextV1.get().isDeletedEntity(objId))) {
+        if (state == AtlasEntity.Status.DELETED || (outId != null && RequestContextV1.get().isDeletedEntity(objId.getGuid()))) {
             //If the reference vertex is marked for deletion, skip updating the reference
             return;
         }

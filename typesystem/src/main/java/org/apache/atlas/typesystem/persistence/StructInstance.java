@@ -260,6 +260,8 @@ public class StructInstance implements ITypedStruct {
             bools[pos] = false;
         } else if (i.dataType() == DataTypes.STRING_TYPE) {
             strings[pos] = null;
+        } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.ENUM) {
+            ints[pos] = 0;
         } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.ARRAY) {
             arrays[pos] = null;
         } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.MAP) {
@@ -268,8 +270,8 @@ public class StructInstance implements ITypedStruct {
             || i.dataType().getTypeCategory() == DataTypes.TypeCategory.TRAIT) {
             structs[pos] = null;
         } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.CLASS) {
-                ids[pos] = null;
-                referenceables[pos] = null;
+            ids[pos] = null;
+            referenceables[pos] = null;
         } else {
             throw new AtlasException(String.format("Unknown datatype %s", i.dataType()));
         }
@@ -284,7 +286,7 @@ public class StructInstance implements ITypedStruct {
         Map<String, Object> m = new HashMap<>();
         for (String attr : fieldMapping.fields.keySet()) {
 //            int pos = fieldMapping.fieldNullPos.get(attr);
-//            if (  explicitSets[pos] ) {
+//            if (!nullFlags[pos]) {
                 m.put(attr, get(attr));
 //            }
         }
