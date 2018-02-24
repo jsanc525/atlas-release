@@ -364,10 +364,6 @@
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
         </dependency>
-        <dependency>
-                <groupId>org.springframework.ldap</groupId>
-                <artifactId>spring-ldap-core</artifactId>
-        </dependency>
 
         <!-- Jersey + Spring -->
         <dependency>
