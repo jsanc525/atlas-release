@@ -27,6 +27,7 @@ import org.apache.atlas.model.instance.AtlasClassification;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasEntity.AtlasEntitiesWithExtInfo;
 import org.apache.atlas.model.instance.AtlasEntity.AtlasEntityWithExtInfo;
+import org.apache.atlas.model.instance.AtlasEntityHeader;
 import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
@@ -78,20 +79,48 @@ public class AtlasEntityStoreV1 implements AtlasEntityStore {
     @Override
     @GraphTransaction
     public AtlasEntityWithExtInfo getById(String guid) throws AtlasBaseException {
+        return getById(guid, false);
+    }
+
+    @Override
+    @GraphTransaction
+    public AtlasEntityWithExtInfo getById(String guid, boolean isMinExtInfo) throws AtlasBaseException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("==> getById({})", guid);
+            LOG.debug("==> getById({}, {})", guid, isMinExtInfo);
         }
 
         EntityGraphRetriever entityRetriever = new EntityGraphRetriever(typeRegistry);
 
-        AtlasEntityWithExtInfo ret = entityRetriever.toAtlasEntityWithExtInfo(guid);
+        AtlasEntityWithExtInfo ret = entityRetriever.toAtlasEntityWithExtInfo(guid, isMinExtInfo);
 
         if (ret == null) {
             throw new AtlasBaseException(AtlasErrorCode.INSTANCE_GUID_NOT_FOUND, guid);
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("<== getById({}): {}", guid, ret);
+            LOG.debug("<== getById({}, {}): {}", guid, isMinExtInfo, ret);
+        }
+
+        return ret;
+    }
+
+    @Override
+    @GraphTransaction
+    public AtlasEntityHeader getHeaderById(String guid) throws AtlasBaseException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("==> getHeaderById({})", guid);
+        }
+
+        EntityGraphRetriever entityRetriever = new EntityGraphRetriever(typeRegistry);
+
+        AtlasEntityHeader ret = entityRetriever.toAtlasEntityHeader(guid);
+
+        if (ret == null) {
+            throw new AtlasBaseException(AtlasErrorCode.INSTANCE_GUID_NOT_FOUND, guid);
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("<== getHeaderById({}): {}", guid, ret);
         }
 
         return ret;
@@ -100,16 +129,22 @@ public class AtlasEntityStoreV1 implements AtlasEntityStore {
     @Override
     @GraphTransaction
     public AtlasEntitiesWithExtInfo getByIds(List<String> guids) throws AtlasBaseException {
+        return getByIds(guids, false);
+    }
+
+    @Override
+    @GraphTransaction
+    public AtlasEntitiesWithExtInfo getByIds(List<String> guids, boolean isMinExtInfo) throws AtlasBaseException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("==> getByIds({})", guids);
+            LOG.debug("==> getByIds({}, {})", guids, isMinExtInfo);
         }
 
         EntityGraphRetriever entityRetriever = new EntityGraphRetriever(typeRegistry);
 
-        AtlasEntitiesWithExtInfo ret = entityRetriever.toAtlasEntitiesWithExtInfo(guids);
+        AtlasEntitiesWithExtInfo ret = entityRetriever.toAtlasEntitiesWithExtInfo(guids, isMinExtInfo);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("<== getByIds({}): {}", guids, ret);
+            LOG.debug("<== getByIds({}, {}): {}", guids, isMinExtInfo, ret);
         }
 
         return ret;
@@ -119,6 +154,13 @@ public class AtlasEntityStoreV1 implements AtlasEntityStore {
     @GraphTransaction
     public AtlasEntityWithExtInfo getByUniqueAttributes(AtlasEntityType entityType, Map<String, Object> uniqAttributes)
             throws AtlasBaseException {
+        return getByUniqueAttributes(entityType, uniqAttributes, false);
+    }
+
+    @Override
+    @GraphTransaction
+    public AtlasEntityWithExtInfo getByUniqueAttributes(AtlasEntityType entityType, Map<String, Object> uniqAttributes, boolean isMinExtInfo)
+            throws AtlasBaseException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("==> getByUniqueAttribute({}, {})", entityType.getTypeName(), uniqAttributes);
         }
@@ -127,7 +169,7 @@ public class AtlasEntityStoreV1 implements AtlasEntityStore {
 
         EntityGraphRetriever entityRetriever = new EntityGraphRetriever(typeRegistry);
 
-        AtlasEntityWithExtInfo ret = entityRetriever.toAtlasEntityWithExtInfo(entityVertex);
+        AtlasEntityWithExtInfo ret = entityRetriever.toAtlasEntityWithExtInfo(entityVertex, isMinExtInfo);
 
         if (ret == null) {
             throw new AtlasBaseException(AtlasErrorCode.INSTANCE_BY_UNIQUE_ATTRIBUTE_NOT_FOUND, entityType.getTypeName(),
