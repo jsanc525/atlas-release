@@ -1003,6 +1003,7 @@ public class EntityGraphMapper {
             for (AtlasClassification classification : classifications) {
                 addClassificationWithNoMetadataUpdate(context, instanceVertex, entityType, classification);
             }
+
             updateModificationMetadata(instanceVertex);
         }
     }
@@ -1143,5 +1144,13 @@ public class EntityGraphMapper {
         }
 
         return ret;
+    }
+
+    public static String getSoftRefFormattedValue(AtlasObjectId objectId) {
+        return getSoftRefFormattedString(objectId.getTypeName(), objectId.getGuid());
+    }
+
+    private static String getSoftRefFormattedString(String typeName, String resolvedGuid) {
+        return String.format(SOFT_REF_FORMAT, typeName, resolvedGuid);
     }
 }
