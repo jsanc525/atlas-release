@@ -47,6 +47,8 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     public static final String HOOK_DATABASE_NAME_CACHE_COUNT = CONF_PREFIX + "database.name.cache.count";
     public static final String HOOK_TABLE_NAME_CACHE_COUNT    = CONF_PREFIX + "table.name.cache.count";
     public static final String CONF_CLUSTER_NAME              = "atlas.cluster.name";
+    public static final String HOOK_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633                  = CONF_PREFIX + "skip.hive_column_lineage.hive-20633";
+    public static final String HOOK_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633_INPUTS_THRESHOLD = CONF_PREFIX + "skip.hive_column_lineage.hive-20633.inputs.threshold";
 
     public static final String DEFAULT_CLUSTER_NAME = "primary";
 
@@ -56,6 +58,10 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     private static final Map<String, Long> knownDatabases;
     private static final Map<String, Long> knownTables;
 
+    private static final boolean skipHiveColumnLineageHive20633;
+    private static final int     skipHiveColumnLineageHive20633InputsThreshold;
+
+
     static {
         for (HiveOperation hiveOperation : HiveOperation.values()) {
             OPERATION_MAP.put(hiveOperation.getOperationName(), hiveOperation);
@@ -63,6 +69,8 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
 
         int dbNameCacheCount  = atlasProperties.getInt(HOOK_DATABASE_NAME_CACHE_COUNT, 10000);
         int tblNameCacheCount = atlasProperties.getInt(HOOK_TABLE_NAME_CACHE_COUNT, 10000);
+        skipHiveColumnLineageHive20633                = atlasProperties.getBoolean(HOOK_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633, true);
+        skipHiveColumnLineageHive20633InputsThreshold = atlasProperties.getInt(HOOK_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633_INPUTS_THRESHOLD, 5); // skip greater-than 5 inputs by default
 
         clusterName    = atlasProperties.getString(CONF_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
         knownDatabases = dbNameCacheCount > 0 ? Collections.synchronizedMap(new LruCache<String, Long>(dbNameCacheCount, 0)) : null;
@@ -172,6 +180,14 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     public boolean isKnownDatabase(String dbQualifiedName) {
         return knownDatabases != null && dbQualifiedName != null ? knownDatabases.containsKey(dbQualifiedName) : false;
     }
+    public boolean getSkipHiveColumnLineageHive20633() {
+        return skipHiveColumnLineageHive20633;
+    }
+
+    public int getSkipHiveColumnLineageHive20633InputsThreshold() {
+        return skipHiveColumnLineageHive20633InputsThreshold;
+    }
+
 
     public boolean isKnownTable(String tblQualifiedName) {
         return knownTables != null && tblQualifiedName != null ? knownTables.containsKey(tblQualifiedName) : false;
