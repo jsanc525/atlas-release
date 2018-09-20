@@ -17,7 +17,10 @@
  */
 package org.apache.atlas.repository.impexp;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.atlas.AtlasErrorCode;
+import org.apache.atlas.entitytransform.BaseEntityHandler;
+import org.apache.atlas.entitytransform.TransformerContext;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.model.impexp.AtlasImportRequest;
 import org.apache.atlas.model.impexp.AtlasImportResult;
@@ -25,6 +28,7 @@ import org.apache.atlas.model.typedef.AtlasTypesDef;
 import org.apache.atlas.repository.store.graph.BulkImporter;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasTypeRegistry;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +41,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+
 
 @Component
 public class ImportService {
@@ -97,6 +103,22 @@ public class ImportService {
         }
 
         return result;
+    }
+
+
+    @VisibleForTesting
+    void setEntityTransformerHandlers(ZipSource source, String transformersJson) throws AtlasBaseException {
+        if (StringUtils.isEmpty(transformersJson)) {
+            return;
+        }
+
+        TransformerContext context = new TransformerContext(typeRegistry, typeDefStore, source.getExportResult().getRequest());
+        List<BaseEntityHandler> entityHandlers = BaseEntityHandler.fromJson(transformersJson, context);
+        if (CollectionUtils.isEmpty(entityHandlers)) {
+            return;
+        }
+
+        source.setEntityHandlers(entityHandlers);
     }
 
     private void setStartPosition(AtlasImportRequest request, ZipSource source) throws AtlasBaseException {
