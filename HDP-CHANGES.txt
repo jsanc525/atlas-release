@@ -389,3 +389,4 @@ BUG-77446: fix Atlas hook to resolve Hive service check failure with NoClassDefF
 BUG-77993: upgrade frontend-maven-plugin to latest
 ATLAS-2634: Avoid duplicate message processing.
 ATLAS-2891: updated hook notification processing with option to ignore potentially incorrect hive_column_lineage
+ATLAS-2891: updated hook notification processing with option to ignore potentially incorrect hive_column_lineage - #2
