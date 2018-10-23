@@ -32,11 +32,14 @@ import org.apache.atlas.model.impexp.AtlasExportRequest;
 import org.apache.atlas.model.impexp.AtlasExportResult;
 import org.apache.atlas.model.impexp.AtlasImportRequest;
 import org.apache.atlas.model.impexp.AtlasImportResult;
+import org.apache.atlas.model.instance.AtlasCheckStateRequest;
+import org.apache.atlas.model.instance.AtlasCheckStateResult;
 import org.apache.atlas.model.metrics.AtlasMetrics;
 import org.apache.atlas.repository.impexp.ExportService;
 import org.apache.atlas.repository.impexp.ImportService;
 import org.apache.atlas.repository.impexp.ZipSink;
 import org.apache.atlas.repository.impexp.ZipSource;
+import org.apache.atlas.repository.store.graph.AtlasEntityStore;
 import org.apache.atlas.services.MetricsService;
 import org.apache.atlas.type.AtlasType;
 import org.apache.atlas.util.SearchTracker;
@@ -109,12 +112,13 @@ public class AdminResource {
     private static final String DEFAULT_EDITABLE_ENTITY_TYPES = "hdfs_path,hbase_table,hbase_column,hbase_column_family,kafka_topic";
     private Response version;
 
-    private final ServiceState      serviceState;
-    private final MetricsService    metricsService;
-    private static Configuration atlasProperties;
-    private final ExportService exportService;
-    private final ImportService importService;
-    private final SearchTracker activeSearches;
+    private final ServiceState             serviceState;
+    private final MetricsService           metricsService;
+    private static Configuration           atlasProperties;
+    private final ExportService            exportService;
+    private final ImportService            importService;
+    private final SearchTracker            activeSearches;
+    private final AtlasEntityStore         entityStore;
 
     static {
         try {
@@ -125,14 +129,16 @@ public class AdminResource {
     }
 
     @Inject
-    public AdminResource(ServiceState serviceState, MetricsService metricsService,
-                         ExportService exportService, ImportService importService, SearchTracker activeSearches) {
-        this.serviceState               = serviceState;
-        this.metricsService             = metricsService;
-        this.exportService = exportService;
-        this.importService = importService;
-        this.activeSearches = activeSearches;
-        importExportOperationLock = new ReentrantLock();
+    public AdminResource(ServiceState serviceState, MetricsService metricsService, ExportService exportService,
+                         ImportService importService, SearchTracker activeSearches,
+                         AtlasEntityStore entityStore) {
+        this.serviceState              = serviceState;
+        this.metricsService            = metricsService;
+        this.exportService             = exportService;
+        this.importService             = importService;
+        this.activeSearches            = activeSearches;
+        this.entityStore               = entityStore;
+        this.importExportOperationLock = new ReentrantLock();
     }
 
     /**
@@ -437,6 +443,15 @@ public class AdminResource {
     public boolean terminateActiveSearch(@PathParam("id") String searchId) {
         SearchContext terminate = activeSearches.terminate(searchId);
         return null != terminate;
+    }
+
+    @POST
+    @Path("checkstate")
+    @Produces(Servlets.JSON_MEDIA_TYPE)
+    @Consumes(Servlets.JSON_MEDIA_TYPE)
+    public AtlasCheckStateResult checkState(AtlasCheckStateRequest request) throws AtlasBaseException {
+        AtlasCheckStateResult ret = entityStore.checkState(request);
+        return ret;
     }
 
     private String getEditableEntityTypes(Configuration config) {
