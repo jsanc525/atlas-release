@@ -83,6 +83,10 @@ public class AtlasHiveHookContext {
         return hook.getClusterName();
     }
 
+    public boolean isConvertHdfsPathToLowerCase() {
+        return hook.isConvertHdfsPathToLowerCase();
+    }
+
     public String getQualifiedName(Database db) {
         return (db.getName() + QNAME_SEP_CLUSTER_NAME).toLowerCase() + getClusterName();
     }

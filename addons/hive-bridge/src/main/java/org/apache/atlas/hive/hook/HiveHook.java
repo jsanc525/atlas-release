@@ -48,6 +48,7 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     public static final String HOOK_DATABASE_NAME_CACHE_COUNT = CONF_PREFIX + "database.name.cache.count";
     public static final String HOOK_TABLE_NAME_CACHE_COUNT    = CONF_PREFIX + "table.name.cache.count";
     public static final String CONF_CLUSTER_NAME              = "atlas.cluster.name";
+    public static final String HDFS_PATH_CONVERT_TO_LOWER_CASE     = CONF_PREFIX + "hdfs_path.convert_to_lowercase";
 
     public static final String DEFAULT_CLUSTER_NAME = "primary";
 
@@ -55,6 +56,7 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     private static final String                     clusterName;
     private static final Map<String, Long>          knownDatabases;
     private static final Map<String, Long>          knownTables;
+    private static final boolean convertHdfsPathToLowerCase;
 
     static {
         for (HiveOperation hiveOperation : HiveOperation.values()) {
@@ -63,6 +65,7 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
 
         int dbNameCacheCount  = atlasProperties.getInt(HOOK_DATABASE_NAME_CACHE_COUNT, 10000);
         int tblNameCacheCount = atlasProperties.getInt(HOOK_TABLE_NAME_CACHE_COUNT, 10000);
+        convertHdfsPathToLowerCase      = atlasProperties.getBoolean(HDFS_PATH_CONVERT_TO_LOWER_CASE, false);
 
         clusterName    = atlasProperties.getString(CONF_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
         knownDatabases = dbNameCacheCount > 0 ? Collections.synchronizedMap(new LruCache<String, Long>(dbNameCacheCount, 0)) : null;
@@ -168,6 +171,10 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
 
     public boolean isKnownDatabase(String dbQualifiedName) {
         return knownDatabases != null && dbQualifiedName != null ? knownDatabases.containsKey(dbQualifiedName) : false;
+    }
+
+    public boolean isConvertHdfsPathToLowerCase() {
+        return convertHdfsPathToLowerCase;
     }
 
     public boolean isKnownTable(String tblQualifiedName) {
