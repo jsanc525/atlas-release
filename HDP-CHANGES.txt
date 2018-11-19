@@ -391,3 +391,4 @@ ATLAS-2634: Avoid duplicate message processing.
 ATLAS-2891: updated hook notification processing with option to ignore potentially incorrect hive_column_lineage
 ATLAS-2891: updated hook notification processing with option to ignore potentially incorrect hive_column_lineage - #2
 ATLAS-2891: updated hook notification processing with option to ignore potentially incorrect hive_column_lineage - #3
+ATLAS-2975: updated Hive hook to avoid duplicate column-lineage entities; also updated Atlas server to skip duplicate column-lineage entities
