@@ -19,6 +19,7 @@
 package org.apache.atlas.hive.hook;
 
 import org.apache.atlas.model.instance.AtlasEntity;
+import org.apache.atlas.hive.hook.HiveHook.PreprocessAction;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -89,6 +90,10 @@ public class AtlasHiveHookContext {
 
     public int getSkipHiveColumnLineageHive20633InputsThreshold() {
         return hook.getSkipHiveColumnLineageHive20633InputsThreshold();
+    }
+
+    public PreprocessAction getPreprocessActionForHiveTable(String qualifiedName) {
+        return hook.getPreprocessActionForHiveTable(qualifiedName);
     }
 
     public String getQualifiedName(Database db) {
