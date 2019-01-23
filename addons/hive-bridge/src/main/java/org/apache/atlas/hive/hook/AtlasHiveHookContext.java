@@ -32,6 +32,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -95,6 +96,18 @@ public class AtlasHiveHookContext {
 
     public int getSkipHiveColumnLineageHive20633InputsThreshold() {
         return hook.getSkipHiveColumnLineageHive20633InputsThreshold();
+    }
+
+    public List getIgnoreDummyDatabaseName() {
+        return hook.getIgnoreDummyDatabaseName();
+    }
+
+    public  List getIgnoreDummyTableName() {
+        return hook.getIgnoreDummyTableName();
+    }
+
+    public  String getIgnoreValuesTmpTableNamePrefix() {
+        return hook.getIgnoreValuesTmpTableNamePrefix();
     }
 
     public String getQualifiedName(Database db) {

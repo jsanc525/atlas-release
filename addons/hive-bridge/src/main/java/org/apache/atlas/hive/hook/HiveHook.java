@@ -24,6 +24,7 @@ import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
 import org.apache.hadoop.hive.ql.hooks.HookContext;
+import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -36,7 +37,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.List;
+import java.util.ArrayList;
 import static org.apache.atlas.hive.hook.events.BaseHiveEvent.ATTRIBUTE_QUALIFIED_NAME;
 import static org.apache.atlas.hive.hook.events.BaseHiveEvent.HIVE_TYPE_DB;
 import static org.apache.atlas.hive.hook.events.BaseHiveEvent.HIVE_TYPE_TABLE;
@@ -66,8 +68,14 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
     private static final int     nameCacheTableMaxCount;
     private static final int     nameCacheRebuildIntervalSeconds;
 
-    private static final boolean skipHiveColumnLineageHive20633;
-    private static final int     skipHiveColumnLineageHive20633InputsThreshold;
+    private static final boolean                       skipHiveColumnLineageHive20633;
+    private static final int                           skipHiveColumnLineageHive20633InputsThreshold;
+    private static final List<Pattern>                 hiveTablesToIgnore = new ArrayList<>();
+    private static final List<Pattern>                 hiveTablesToPrune  = new ArrayList<>();
+    private static final Map<String, PreprocessAction> hiveTablesCache;
+    private static final List    ignoreDummyDatabaseName;
+    private static final List    ignoreDummyTableName;
+    private static final String  ignoreValuesTmpTableNamePrefix;
 
     private static HiveHookObjectNamesCache knownObjects = null;
 
@@ -86,6 +94,17 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
         skipHiveColumnLineageHive20633InputsThreshold = atlasProperties.getInt(HOOK_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633_INPUTS_THRESHOLD, 15); // skip if avg # of inputs is > 15
 
         knownObjects = nameCacheEnabled ? new HiveHookObjectNamesCache(nameCacheDatabaseMaxCount, nameCacheTableMaxCount, nameCacheRebuildIntervalSeconds) : null;
+
+        List<String> defaultDummyDatabase = new ArrayList<>();
+        defaultDummyDatabase.add(SemanticAnalyzer.DUMMY_DATABASE);
+
+        List<String> defaultDummyTable = new ArrayList<>();
+        defaultDummyTable.add(SemanticAnalyzer.DUMMY_TABLE);
+
+        ignoreDummyDatabaseName = atlasProperties.getList("atlas.hook.hive.ignore.dummy.database.name", defaultDummyDatabase);
+        ignoreDummyTableName = atlasProperties.getList("atlas.hook.hive.ignore.dummy.table.name", defaultDummyTable);
+        ignoreValuesTmpTableNamePrefix = atlasProperties.getString("atlas.hook.hive.ignore.values.tmp.table.name.prefix", "Values__Tmp__Table__" );
+
     }
 
 
@@ -202,6 +221,53 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
 
     public int getSkipHiveColumnLineageHive20633InputsThreshold() {
         return skipHiveColumnLineageHive20633InputsThreshold;
+    }
+
+    public PreprocessAction getPreprocessActionForHiveTable(String qualifiedName) {
+        PreprocessAction ret = PreprocessAction.NONE;
+
+        if (qualifiedName != null && (CollectionUtils.isNotEmpty(hiveTablesToIgnore) || CollectionUtils.isNotEmpty(hiveTablesToPrune))) {
+            ret = hiveTablesCache.get(qualifiedName);
+
+            if (ret == null) {
+                if (isMatch(qualifiedName, hiveTablesToIgnore)) {
+                    ret = PreprocessAction.IGNORE;
+                } else if (isMatch(qualifiedName, hiveTablesToPrune)) {
+                    ret = PreprocessAction.PRUNE;
+                } else {
+                    ret = PreprocessAction.NONE;
+                }
+
+                hiveTablesCache.put(qualifiedName, ret);
+            }
+        }
+
+        return ret;
+    }
+
+    private boolean isMatch(String name, List<Pattern> patterns) {
+        boolean ret = false;
+
+        for (Pattern p : patterns) {
+            if (p.matcher(name).matches()) {
+                ret = true;
+
+                break;
+            }
+        }
+
+        return ret;
+    }
+    public  List getIgnoreDummyDatabaseName() {
+        return ignoreDummyDatabaseName;
+    }
+
+    public  List getIgnoreDummyTableName() {
+        return ignoreDummyTableName;
+    }
+
+    public  String getIgnoreValuesTmpTableNamePrefix() {
+        return ignoreValuesTmpTableNamePrefix;
     }
 
 
