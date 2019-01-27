@@ -34,6 +34,7 @@ import org.apache.atlas.repository.store.graph.v1.AtlasEntityStoreV1;
 import org.apache.atlas.repository.store.graph.v1.AtlasEntityStream;
 import org.apache.atlas.repository.store.graph.v1.DeleteHandlerV1;
 import org.apache.atlas.repository.store.graph.v1.EntityGraphMapper;
+import org.apache.atlas.repository.store.graph.v1.EntityGraphRetriever;
 import org.apache.atlas.repository.store.graph.v1.SoftDeleteHandlerV1;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasType;
@@ -76,6 +77,8 @@ public class ExportServiceTest {
     @Inject
     private EntityGraphMapper graphMapper;
     @Inject
+    private EntityGraphRetriever graphRetriever;
+    @Inject
     ExportService exportService;
     private DeleteHandlerV1 deleteHandler = mock(SoftDeleteHandlerV1.class);;
     private AtlasEntityChangeNotifier mockChangeNotifier = mock(AtlasEntityChangeNotifier.class);
@@ -89,7 +92,7 @@ public class ExportServiceTest {
 
     @BeforeClass
     public void setupSampleData() throws AtlasBaseException {
-        entityStore = new AtlasEntityStoreV1(deleteHandler, typeRegistry, mockChangeNotifier, graphMapper);;
+        entityStore = new AtlasEntityStoreV1(deleteHandler, typeRegistry, mockChangeNotifier, graphMapper, graphRetriever);;
 
         AtlasTypesDef sampleTypes = TestUtilsV2.defineDeptEmployeeTypes();
         AtlasTypesDef typesToCreate = AtlasTypeDefStoreInitializer.getTypesToCreate(sampleTypes, typeRegistry);
