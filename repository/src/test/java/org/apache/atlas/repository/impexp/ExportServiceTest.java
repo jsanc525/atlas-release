@@ -89,7 +89,7 @@ public class ExportServiceTest {
 
     @BeforeClass
     public void setupSampleData() throws AtlasBaseException {
-        entityStore = new AtlasEntityStoreV1(deleteHandler, typeRegistry, mockChangeNotifier, graphMapper);;
+        entityStore = new AtlasEntityStoreV1(deleteHandler, typeRegistry, mockChangeNotifier, graphMapper, null);
 
         AtlasTypesDef sampleTypes = TestUtilsV2.defineDeptEmployeeTypes();
         AtlasTypesDef typesToCreate = AtlasTypeDefStoreInitializer.getTypesToCreate(sampleTypes, typeRegistry);

@@ -43,6 +43,11 @@ import static org.testng.Assert.assertTrue;
 public class AdminExportImportTestIT extends BaseResourceIT {
     private final String FILE_TO_IMPORT = "stocks-base.zip";
 
+    static final String IMPORT_TRANSFORM_CLEAR_ATTRS =
+            "{ \"Asset\": { \"*\":[ \"clearAttrValue:replicatedTo,replicatedFrom\" ] } }";
+    static final String IMPORT_TRANSFORM_SET_DELETED =
+            "{ \"Referenceable\": { \"*\":[ \"setDeleted\" ] } }";
+
     @Test
     public void isActive() throws AtlasServiceException {
         assertEquals(atlasClientV2.getAdminStatus(), "ACTIVE");
