@@ -114,7 +114,7 @@ public class FullTextMapperV2 {
         if (entity != null) {
             StringBuilder sb = new StringBuilder();
 
-            map(entity, null, sb, new HashSet<>());
+            map(entity, null, sb, new HashSet<String>());
 
             ret = sb.toString();
         }
