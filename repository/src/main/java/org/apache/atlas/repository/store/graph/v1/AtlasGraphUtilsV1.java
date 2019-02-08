@@ -172,8 +172,6 @@ public class AtlasGraphUtilsV1 {
             LOG.debug("==> setProperty({}, {}, {})", toString(element), propertyName, value);
         }
 
-        propertyName = encodePropertyKey(propertyName);
-
         Object existingValue = element.getProperty(propertyName, Object.class);
 
         if (value == null || (value instanceof Collection && ((Collection)value).isEmpty())) {
@@ -200,20 +198,6 @@ public class AtlasGraphUtilsV1 {
         }
     }
 
-    public static <T extends AtlasVertex> Object getProperty(T vertex, String propertyName) {
-        String encodePropertyName = encodePropertyKey(propertyName);
-
-        if(AtlasGraphProvider.getGraphInstance().isMultiProperty(encodePropertyName)) {
-            return vertex.getPropertyValues(encodePropertyName, String.class);
-        }
-
-        return vertex.getProperty(encodePropertyKey(propertyName), Object.class);
-    }
-
-    public static <T extends AtlasElement> Object getProperty(T element, String propertyName) {
-        return element.getProperty(encodePropertyKey(propertyName), Object.class);
-    }
-
     public static <T extends AtlasElement, O> O getProperty(T element, String propertyName, Class<O> returnType) {
         return getEncodedProperty(element, encodePropertyKey(propertyName), returnType);
     }
@@ -226,6 +210,22 @@ public class AtlasGraphUtilsV1 {
         }
 
         return returnType.cast(property);
+    }
+
+    public static <T extends AtlasVertex> Object getEncodedProperty(T vertex, String propertyName) {
+        if(AtlasGraphProvider.getGraphInstance().isMultiProperty(propertyName)) {
+            return vertex.getPropertyValues(propertyName, String.class);
+        }
+
+        return vertex.getProperty(propertyName, Object.class);
+    }
+
+    public static <T extends AtlasEdge> Object getEncodedProperty(T edge, String propertyName) {
+        if(AtlasGraphProvider.getGraphInstance().isMultiProperty(propertyName)) {
+            return edge.getPropertyValues(propertyName, String.class);
+        }
+
+        return edge.getProperty(propertyName, Object.class);
     }
 
     public static AtlasVertex getVertexByUniqueAttributes(AtlasEntityType entityType, Map<String, Object> attrValues) throws AtlasBaseException {
