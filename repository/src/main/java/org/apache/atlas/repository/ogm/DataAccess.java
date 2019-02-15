@@ -70,19 +70,23 @@ public class DataAccess {
             DataTransferObject<T> dto = (DataTransferObject<T>) dtoRegistry.get(obj.getClass());
 
             AtlasEntityWithExtInfo entityWithExtInfo      = dto.toEntityWithExtInfo(obj);
-            EntityMutationResponse entityMutationResponse = entityStore.createOrUpdate(new AtlasEntityStream(entityWithExtInfo), false);
+            try {
+                EntityMutationResponse entityMutationResponse =
+                        entityStore.createOrUpdate(new AtlasEntityStream(entityWithExtInfo), false);
 
-            if (noEntityMutation(entityMutationResponse)) {
+                // Update GUID assignment for newly created entity
+                if (CollectionUtils.isNotEmpty(entityMutationResponse.getCreatedEntities())) {
+                    String assignedGuid = entityMutationResponse.getGuidAssignments().get(obj.getGuid());
+                    if (!obj.getGuid().equals(assignedGuid)) {
+                        obj.setGuid(assignedGuid);
+                    }
+                }
+            }
+            catch (AtlasBaseException e)
+            {
                 throw new AtlasBaseException(AtlasErrorCode.DATA_ACCESS_SAVE_FAILED, obj.toString());
             }
 
-            // Update GUID assignment for newly created entity
-            if (CollectionUtils.isNotEmpty(entityMutationResponse.getCreatedEntities())) {
-                String assignedGuid = entityMutationResponse.getGuidAssignments().get(obj.getGuid());
-                if (!obj.getGuid().equals(assignedGuid)) {
-                    obj.setGuid(assignedGuid);
-                }
-            }
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -261,10 +265,5 @@ public class DataAccess {
         } finally {
             AtlasPerfTracer.log(perf);
         }
-    }
-
-    // Helper functions
-    private boolean noEntityMutation(EntityMutationResponse er) {
-        return er == null || (CollectionUtils.isEmpty(er.getCreatedEntities()) && CollectionUtils.isEmpty(er.getUpdatedEntities()));
     }
 }
