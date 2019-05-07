@@ -17,6 +17,11 @@
  */
 package org.apache.atlas.repository.graphdb;
 
+import org.apache.atlas.AtlasException;
+import org.apache.atlas.exception.AtlasBaseException;
+import org.apache.atlas.groovy.GroovyExpression;
+import org.apache.atlas.type.AtlasType;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
@@ -25,9 +30,6 @@ import java.util.Set;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.apache.atlas.exception.AtlasBaseException;
-import org.apache.atlas.groovy.GroovyExpression;
-import org.apache.atlas.type.AtlasType;
 
 /**
  * Represents a graph.
@@ -168,6 +170,14 @@ public interface AtlasGraph<V, E> {
      * Elastic Search Reference</a> for query syntax
      */
     AtlasIndexQuery<V, E> indexQuery(String indexName, String queryString, int offset);
+
+    /**
+     * Creates an index query.
+     *
+     * @param indexQueryParameters the parameterObject containing the information needed for creating the index.
+     *
+     */
+    AtlasIndexQuery<V, E> indexQuery(GraphIndexQueryParameters indexQueryParameters);
 
     /**
      * Gets the management object associated with this graph and opens a transaction
@@ -322,4 +332,26 @@ public interface AtlasGraph<V, E> {
      * @return
      */
     boolean isMultiProperty(String name);
+
+    /**
+     * return the encoded name used for the attribute identified by property key and index name.
+     * @param propertyKey the property key of attributed
+     * @param indexName the name of the index containing the property.
+     * @return the encoded name of the property.
+     */
+    String getIndexFieldName(AtlasPropertyKey propertyKey, String indexName);
+    /**
+     * Create Index query parameter for use with atlas graph.
+     * @param parameterName the name of the parameter that needs to be passed to index layer.
+     * @param parameterValue the value of the paratemeter that needs to be passed to the index layer.
+     * @return
+     */
+    AtlasIndexQueryParameter indexQueryParameter(String parameterName, String parameterValue);
+
+    /**
+     * Implementors should return graph index client.
+     * @return the graph index client
+     * @throws AtlasException when error encountered in creating the client.
+     */
+    AtlasGraphIndexClient getGraphIndexClient()throws AtlasException;
 }
