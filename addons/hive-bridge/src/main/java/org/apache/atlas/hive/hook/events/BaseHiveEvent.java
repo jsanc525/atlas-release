@@ -151,6 +151,7 @@ public abstract class BaseHiveEvent {
     public static final String ATTRIBUTE_HOSTNAME                  = "hostName";
     public static final String ATTRIBUTE_EXEC_TIME                 = "execTime";
     public static final String ATTRIBUTE_DDL_QUERIES               = "ddlQueries";
+    public static final String ATTRIBUTE_SERVICE_TYPE              = "serviceType";
 
     public static final String HBASE_STORAGE_HANDLER_CLASS         = "org.apache.hadoop.hive.hbase.HBaseStorageHandler";
     public static final String HBASE_DEFAULT_NAMESPACE             = "default";
@@ -690,11 +691,13 @@ public abstract class BaseHiveEvent {
         }
 
         if (hiveDDL != null) {
+            hiveDDL.setAttribute(ATTRIBUTE_SERVICE_TYPE, "hive");
             hiveDDL.setAttribute(ATTRIBUTE_EXEC_TIME, getQueryStartTime());
             hiveDDL.setAttribute(ATTRIBUTE_QUERY_TEXT, getQueryString());
             hiveDDL.setAttribute(ATTRIBUTE_USER_NAME, getUserName());
-            hiveDDL.setAttribute(ATTRIBUTE_NAME, getQueryString() + QNAME_SEP_PROCESS + getQueryStartTime().toString());
-            hiveDDL.setAttribute(ATTRIBUTE_QUALIFIED_NAME, hiveDDL.getAttribute(ATTRIBUTE_NAME));
+            hiveDDL.setAttribute(ATTRIBUTE_NAME, getQueryString());
+            hiveDDL.setAttribute(ATTRIBUTE_QUALIFIED_NAME, dbOrTable.getAttribute(ATTRIBUTE_QUALIFIED_NAME).toString()
+                                                           + QNAME_SEP_PROCESS + getQueryStartTime().toString());
         }
 
         return hiveDDL;

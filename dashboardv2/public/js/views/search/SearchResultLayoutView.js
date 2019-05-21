@@ -70,7 +70,8 @@ define(['require',
                 showPage: "[data-id='showPage']",
                 gotoPage: "[data-id='gotoPage']",
                 gotoPagebtn: "[data-id='gotoPagebtn']",
-                activePage: "[data-id='activePage']"
+                activePage: "[data-id='activePage']",
+                rowData: ".row"
             },
             templateHelpers: function() {
                 return {
@@ -267,7 +268,7 @@ define(['require',
                         el: this.ui.colManager
                     },
                     gridOpts: {
-                        emptyText: 'No Record found!',
+                        emptyText: 'No Records found!',
                         className: 'table table-hover backgrid table-quickMenu colSort'
                     },
                     filterOpts: {},
@@ -425,12 +426,13 @@ define(['require',
                             return;
                         }
                         if (isPostMethod) {
-                            that.searchCollection.referredEntities = dataOrCollection.referredEntities;
                             Utils.findAndMergeRefEntity({
                                 attributeObject: dataOrCollection.entities,
                                 referredEntities: dataOrCollection.referredEntities
                             });
-                            that.searchCollection.fullCollection.reset(dataOrCollection.entities, { silent: false });
+                            that.searchCollection.referredEntities = dataOrCollection.referredEntities;
+                            that.searchCollection.entities = dataOrCollection.entities;
+                            that.searchCollection.reset(dataOrCollection.entities, { silent: true });
                         }
 
 
@@ -560,6 +562,10 @@ define(['require',
                 var table = new TableLayout(_.extend({}, that.commonTableOptions, {
                     columns: columns
                 }));
+                if (table.collection.length === 0) {
+                    this.hideIrreleventElements();
+                    return;
+                }
                 if (!that.REntityTableLayoutView) {
                     return;
                 }
@@ -790,6 +796,10 @@ define(['require',
                     }
                 }
                 return this.searchCollection.constructor.getTableCols(col, this.searchCollection);
+            },
+            hideIrreleventElements: function() {
+                this.ui.rowData.siblings('.well').hide();
+                this.ui.rowData.siblings('.no-data').show();
             },
             getDaynamicColumns: function(valueObj) {
                 var that = this,
