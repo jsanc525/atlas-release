@@ -421,3 +421,4 @@ Fix Atlas build-tools dependency
 BUG-90089: Remove falcon hook from atlas
 BUG-89993: Remove shading of hbase-server and hbase-client libraries
 BUG-89991: Update atlas to use the latest component release versions
+ATLAS-3328 UI : Sort issue after changing the per page results.
