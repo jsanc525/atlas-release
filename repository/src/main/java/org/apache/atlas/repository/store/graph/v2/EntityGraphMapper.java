@@ -83,6 +83,7 @@ import static org.apache.atlas.model.instance.EntityMutations.EntityOperation.PA
 import static org.apache.atlas.model.instance.EntityMutations.EntityOperation.UPDATE;
 import static org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef.Cardinality.SET;
 import static org.apache.atlas.repository.Constants.*;
+import static org.apache.atlas.repository.graph.GraphHelper.DEFAULT_REMOVE_PROPAGATIONS_ON_ENTITY_DELETE;
 import static org.apache.atlas.repository.graph.GraphHelper.getCollectionElementsUsingRelationship;
 import static org.apache.atlas.repository.graph.GraphHelper.getClassificationEdge;
 import static org.apache.atlas.repository.graph.GraphHelper.getClassificationVertex;
@@ -108,8 +109,9 @@ public class EntityGraphMapper {
     private static final Logger LOG      = LoggerFactory.getLogger(EntityGraphMapper.class);
     private static final Logger PERF_LOG = AtlasPerfTracer.getPerfLogger("entityGraphMapper");
 
-    private static final String SOFT_REF_FORMAT      = "%s:%s";
-    private static final int INDEXED_STR_SAFE_LEN = AtlasConfiguration.GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH.getInt();
+    private static final String SOFT_REF_FORMAT               = "%s:%s";
+    private static final int INDEXED_STR_SAFE_LEN             = AtlasConfiguration.GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH.getInt();
+    private static final String CLASSIFICATION_NAME_DELIMITER = "|";
 
     private final GraphHelper               graphHelper = GraphHelper.getInstance();
     private final AtlasGraph                graph;
@@ -119,7 +121,7 @@ public class EntityGraphMapper {
     private final AtlasEntityChangeNotifier entityChangeNotifier;
     private final AtlasInstanceConverter    instanceConverter;
     private final EntityGraphRetriever      entityRetriever;
-    private final FullTextMapperV2 fullTextMapperV2;
+    private final FullTextMapperV2          fullTextMapperV2;
 
     @Inject
     public EntityGraphMapper(DeleteHandlerDelegate deleteDelegate, AtlasTypeRegistry typeRegistry, AtlasGraph atlasGraph,
@@ -1513,7 +1515,7 @@ public class EntityGraphMapper {
                     LOG.debug("Adding classification [{}] to [{}] using edge label: [{}]", classificationName, entityType.getTypeName(), getTraitLabel(classificationName));
                 }
 
-                AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, classificationName);
+                addClassificationAndTraitNames(entityVertex, classificationName);
 
                 // add a new AtlasVertex for the struct or trait instance
                 AtlasVertex classificationVertex = createClassificationVertex(classification);
@@ -1668,7 +1670,7 @@ public class EntityGraphMapper {
 
         traitNames.remove(classificationName);
 
-        updateTraitNamesProperty(entityVertex, traitNames);
+        updateClassificationAndTraitNames(entityVertex, traitNames);
 
         updateModificationMetadata(entityVertex);
 
@@ -1687,6 +1689,38 @@ public class EntityGraphMapper {
 
         vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
         return entity;
+    }
+
+    public void setClassificationNames(AtlasVertex vertex) {
+        List<String> clsNamesList     = getTraitNames(vertex, false);
+        List<String> propClsNamesList = getTraitNames(vertex, true);
+        String clsNames               = StringUtils.join(clsNamesList, CLASSIFICATION_NAME_DELIMITER);
+        String propClsNames           = StringUtils.join(propClsNamesList, CLASSIFICATION_NAME_DELIMITER);
+
+        vertex.setProperty(CLASSIFICATION_NAMES_KEY, clsNames);
+        vertex.setProperty(PROPAGATED_CLASSIFICATION_NAMES_KEY, propClsNames);
+    }
+
+    private void addClassificationAndTraitNames(AtlasVertex entityVertex, String classificationName) {
+
+        AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, classificationName);
+
+        String clsNames = entityVertex.getProperty(CLASSIFICATION_NAMES_KEY, String.class);
+        clsNames = StringUtils.isEmpty(clsNames) ? classificationName : clsNames + CLASSIFICATION_NAME_DELIMITER + classificationName;
+        entityVertex.setProperty(CLASSIFICATION_NAMES_KEY, clsNames);
+    }
+
+    private void updateClassificationAndTraitNames(AtlasVertex entityVertex, List<String> traitNames) {
+        if (entityVertex != null) {
+            entityVertex.removeProperty(TRAIT_NAMES_PROPERTY_KEY);
+            entityVertex.removeProperty(CLASSIFICATION_NAMES_KEY);
+
+            for (String traitName : traitNames) {
+                AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, traitName);
+            }
+
+            entityVertex.setProperty(CLASSIFICATION_NAMES_KEY, StringUtils.join(traitNames, CLASSIFICATION_NAME_DELIMITER));
+        }
     }
 
     public void updateClassifications(EntityMutationContext context, String guid, List<AtlasClassification> classifications) throws AtlasBaseException {
@@ -1907,16 +1941,6 @@ public class EntityGraphMapper {
         if (CollectionUtils.isNotEmpty(traitNames)) {
             for (String traitName : traitNames) {
                 deleteClassification(guid, traitName);
-            }
-        }
-    }
-
-    private void updateTraitNamesProperty(AtlasVertex entityVertex, List<String> traitNames) {
-        if (entityVertex != null) {
-            entityVertex.removeProperty(TRAIT_NAMES_PROPERTY_KEY);
-
-            for (String traitName : traitNames) {
-                AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, traitName);
             }
         }
     }
