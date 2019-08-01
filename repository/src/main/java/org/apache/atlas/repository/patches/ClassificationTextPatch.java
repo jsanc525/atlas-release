@@ -126,8 +126,7 @@ public class ClassificationTextPatch extends AtlasPatchHandler {
                 return;
             }
 
-            getEntityGraphMapper().updateClassificationText(vertex);
-            getEntityGraphMapper().setClassificationNames(vertex);
+            getEntityGraphMapper().updateClassificationTextAndNames(vertex);
 
             if(LOG.isDebugEnabled()) {
                 LOG.debug("processItem(typeName={}, vertexId={}): Done!", typeName, vertexId);
