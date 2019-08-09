@@ -579,6 +579,8 @@ define(['require',
                                 var imageIconPath = Utils.getEntityIconPath({ entityData: node }),
                                     imagePath = ((originLink + Utils.getBaseUrl(window.location.pathname)) + imageIconPath);
 
+                                shapeSvg.attr("data-iconpath", imageIconPath);
+
                                 var getImageData = function(options) {
                                     var imagePath = options.imagePath,
                                         ajaxOptions = {
