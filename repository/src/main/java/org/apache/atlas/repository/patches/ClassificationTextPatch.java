@@ -18,8 +18,10 @@
 package org.apache.atlas.repository.patches;
 
 import org.apache.atlas.exception.AtlasBaseException;
+import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.type.AtlasEntityType;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +71,11 @@ public class ClassificationTextPatch extends AtlasPatchHandler {
         protected void processItem(Long vertexId, AtlasVertex vertex, String typeName, AtlasEntityType entityType) throws AtlasBaseException {
             if(LOG.isDebugEnabled()) {
                 LOG.debug("processItem(typeName={}, vertexId={})", typeName, vertexId);
+            }
+
+            if(CollectionUtils.isEmpty(vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class)) &&
+                    CollectionUtils.isEmpty(vertex.getPropertyValues(Constants.PROPAGATED_TRAIT_NAMES_PROPERTY_KEY, String.class))) {
+                return;
             }
 
             getEntityGraphMapper().updateClassificationText(vertex);
