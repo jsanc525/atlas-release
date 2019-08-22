@@ -1,4 +1,275 @@
 --------------------
+HDP-3.1.4 Changes
+--------------------
+
+ATLAS-3381: Updates to patch handlers for periodic commit.
+ATLAS-3374: fix for incorrect basic/quick search results
+ATLAS-3362: Updated logic for storing repl key for table-level replication.
+ATLAS-2933: Fix for changed behavior of empty arr attributes
+ATLAS-3332: In relationship tab empty valued attributes are shown even though Show empty values is unchecked
+ATLAS-3348: Bump jackson.databind to 2.9.9.1
+ATLAS-3345: AggregationMetrics on quick search is empty
+ATLAS-3339: Exclude dom4j library from being packaged in atlas war
+ATLAS-3324: Incremental export with hive_table for table-level replication.
+ATLAS-3338: avoid repeated calls to get index-field name during startup
+ATLAS-3333: updated notification pre-process with an option to ignore dummy Hive database/table
+ATLAS-3337: Update Spring Framework/Security library version
+ATLAS-3329: Update usage of Servlets.getUserName method to AtlasAuthorizationUtils.getCurrentUserName()
+ATLAS-3322: fixed incorrect type-version typedef patches that update search weightd
+ATLAS-3331: updated metrics UI to display notification consumption details per topic
+ATLAS-3313: enhanced Atlas server to process notifications from multiple Kafka topics
+ATLAS-3323: updated log4j configuration to fix placement of maxFileSize and maxBackupIndex
+ATLAS-3317: Set maxWait systemProperty in jetty maven plugin to avoid timeout scanning annotations while running Integration Tests
+ATLAS-3308: enhanced Quicksearch API to support parameters via POST method - #2
+ATLAS-3308: enhanced Quicksearch API to support parameters via POST method
+ATLAS-3318: Throw exception when getGraphInstance() is unable to open janusgraph instance
+ATLAS-3316: getResolvedEntityVertex returns null if AtlasRelatedObjectId is referenced with AtlasObjectId
+ATLAS-3311: changes Download link text from Source Downloads => All Releases for master
+ATLAS-3311: old release download linkes updated with archive reference
+ATLAS-3307:- UT fix to add Tag propagation property which is not configured for all tags #59
+ATLAS-3301: 0.8.4 master doc changes
+ATLAS-3294: UI: Quick-search UI visual appearance enhancement
+ATLAS-2183:- fixed Export-API documentation. curl example json syntax and options element to work properly
+ATLAS-3134: Change Date.getTime() to System.currentTimeMillis() for better performance
+ATLAS-3298: set hive_process startTime to System.currentTimeMillis() if startTime is null
+ATLAS-3297: cache added/update entities in request-context, for use in entity-change listeners
+ATLAS-3256: Modify export API to process with relationshipAttributes
+ATLAS-3292: remove legacy attributes from hbase/kafka/storm/falcon/avro models
+ATLAS-3291: UI: Don't allow user to sort on multiple value columns
+ATLAS-3293: Move LARGE_MESSAGES log to correct directory (#60)
+ATLAS-3283: Export-import UTs are getting skipped
+ATLAS-3277: Add default atlas conf path in the import-* scripts
+ATLAS-3282: UI : use search suggestions API for quick-search
+ATLAS-3198: Stop pushing message to ATLAS_HOOK for Truncate Table/Delete data/Update data
+ATLAS-3263: UI: Assign button (Create Term) should be blocked while an API call is in progress
+ATLAS-3256: Modify export API to process with relationshipAttributes #1 (zip for new unit test cases)
+ATLAS-3279: avoid unncessary retrieval of entity-extended info while sending notifications
+ATLAS-3231: Service specific icon should be shown for process_execution.
+ATLAS-3276: Fix stale transactions in atlas due to ATLAS-3246 (Free-text search)
+ATLAS-3267: Atlas doc changes for  menu & download page 1.2.0 releae
+ATLAS-3278: suggestions is not working for existing Atlas instances
+ATLAS-3270: added a rest end point to get suggestions for a given search-prefix
+ATLAS-3275: Basic Search with "query" string throws "Problem accessing /solr/vertex_index/freetext".
+ATLAS-3274: Updating relationship instance with a wrong guid throws 500 , expected is 400
+ATLAS-3244: UI : Allows user to search the entities from any page (quick-search)
+ATLAS-3273: UI : Lineage Increase double click time
+ATLAS-3231: Service specific icon should be shown for process_execution
+ATLAS-3271: fix for test failures in atlas-distro module
+ATLAS-3262: disabled full-text index population when free-text is enabled i.e. for Solr index store
+ATLAS-3246: enhancements in free-text search functionality
+ATLAS-3251: Implement Patch to populate classification text for legacy data.
+ATLAS-3100: Enhance Full Text Search backend implementation to use SOLR request handler.
+ATLAS-3269: fixed basic-search handing of search for entities with no-classication
+ATLAS-3213: UI : Png export not working in Safari Browser.
+ATLAS-3225: UI: 'Name' Column size gets affected after changing sorting of column.
+ATLAS-3217: Cannot start Atlas 3.0 SNAPSHOT in embedded-hbase-solr configuration
+ATLAS-3217: Cannot start Atlas 3.0 SNAPSHOT in embedded-hbase-solr configuration #fix UT failure
+ATLAS-3201: Fix getByGuid in AtlasTypeRegistry, doesn't raise exception if guid invalid
+ATLAS-3234: Add option in Precommit-Atlas to build and run tests on git pull request
+ATLAS-3240: Update 'http' urls to 'https' in maven settings
+ATLAS-3239: Fixed documentation error in Typesystem
+ATLAS-3250: jackson version to 2.9.9 in pom.xml
+ATLAS-2901: Change classification name rule - Support multiple languages (unicode)
+ATLAS-3229: DDL should not capture DML queries
+ATLAS-3180: enhanced typedef retrieval to support filter by serviceType
+ATLAS-3227: fixed removal of indexes while deleting typedefs
+ATLAS-3226: Add QueryText for hive_table and hive_db for Impala integration
+ATLAS-3248: UI: Number of Search Page results not matching set Page limit.
+ATLAS-3228: UI: Dots appearing in select column in Search page.
+ATLAS-3220: Change hiveDDL name and qualifiedName
+ATLAS-3258: Update apache-rat-plugin to 0.13
+ATLAS-3241: Fix Invalid package name for AtlasClientV2Test.java
+ATLAS-3243: Fix to support Atlas UI to be access via Knox Trusted Proxy.
+ATLAS-3247: UI:Search page showing unnecessary UI elements when no records are found.
+ATLAS-3222: Update httpclient jar version to 4.5.3 to fix NoSuchMethodError error
+ATLAS-3218: UI - entity detail page columns sorting empty value check
+ATLAS-3216: Fixed typos in What's New for 2 doc
+ATLAS-3196: UI : Lineage support for IE.
+ATLAS-3008: UI: Add local sorting for the Search table
+ATLAS-3181: fixed swagger interactive example URLs
+ATLAS-3168: Fix intermittent UT failure: KafkaNotificationTest.initNotificationService()
+ATLAS-3157: Add Integration tests for Hive metastore hook
+ATLAS-3050: OGM DataAccess error handling.
+ATLAS-3036: Improve FullTextMapper performance during entity retrieval - #3
+ATLAS-3036: Improve FullTextMapper performance during entity retrieval - #2
+ATLAS-3036: Improve FullTextMapper performance during entity retrieval
+ATLAS-2885: Skip handling of INSERT INTO...VALUES hive query messages
+ATLAS-2799: Import Transforms: Additional transforms.
+ATLAS-3045: Fix atlas-server-package.xml and add a new classification-updater assembly
+ATLAS-3212: Part 2. Update to unit test imports.
+ATLAS-3212: Importing with import transforms applied to exising entities.
+ATLAS-3123: Update Atlas website for 2.0.0 release
+ATLAS-3197: Disable creation of hive process, hive process execution and ddl query entities for HMS hook
+ATLAS-3202: Hive hook: getStorageDescEntity() throws NPE if bucketCols is null
+ATLAS-3176: Fix for export order regression.
+ATLAS-3200: Add missing memory requirements for dev-support/atlas-docker/Dockerfile.
+ATLAS-3197: capture DDL statements for hive_table and hive_db operations
+ATLAS-3133: Add support for Process Executions in Atlas
+ATLAS-3135: typedef-delete with empty typedefs result in search failures
+ATLAS-3193: Import to existing entity.
+ATLAS-3048: Remove use of hard coded qualifiedName.
+ATLAS-3190: UI : Allow user to refresh metric data inside popup
+ATLAS-3182: Import transforms handling qualifiedName for hive_table entity.
+ATLAS-3046: Classification Updater tool. Unique name used.
+ATLAS-3155: UI - IE-11 - Name entry not clickable (#2)
+ATLAS-3188: Regression: Simple insert queries are being captured in ATLAS_HOOK topic
+ATLAS-3187: columns attribute is empty for deleted hive_table entity
+ATLAS-3167: Exception while starting Atlas with Cassandra
+ATLAS-3174: UI : Exclude process or deleted entity from search drop-down if respective options are chosen
+ATLAS-3160: remove unthrown exception specified in AtlasRelationshipDef constructors
+ATLAS-3155: UI - IE-11 - Name entry not clickable
+ATLAS-3168: PatchFx: Unit test fixes and optimization.
+ATLAS-3168: PatchFix: Support for HA Mode
+ATLAS-3129: Fix SSL Truststore reloader leak from AtlasBaseClient
+ATLAS-3159: : UI : Add Reset button for Lienage
+ATLAS-3154: UI - Lineage PNG export not working on Firefox
+ATLAS-3158: UI : Render schema tab using relationshipAttributes (Columns)
+ATLAS-3145: UI :Entity showing Active even if the relationshipStatus is Deleted.
+ATLAS-2842: fixed incorrect AtlasObjectId.equals()
+ATLAS-3151: fix clientv2 getRelationshipByGuid bug
+ATLAS-3146: UI : Toggle N/A values in relationship and property tables.
+ATLAS-3147: added periodic logging of stats
+ATLAS-3148: Implement Hive Metastore hook for Atlas
+ATLAS-3143: PatchFx: Memory usage and performance improvement.
+ATLAS-3132: performance improvements in UniqueAttributesPatch
+ATLAS-3033: Skip hive temp table while getting Table object details from hiveContext.
+ATLAS-3138: UI : Stats popup table layout improve for better readability -- adding missing number format for entities list
+ATLAS-3137: UI : Create entity add element validation and design improvement
+ATLAS-3138: UI : Stats popup table layout improve for better readability
+ATLAS-3139: updated basic search to include relationship attributes as well in the result
+ATLAS-3136: assigning a term to an invalid entity guid throws 500, instead of 400
+ATLAS-3056: updated rdbms types to remove use of ownedRef/inverseRef - #3
+ATLAS-3131: stats UI improvements
+ATLAS-3071: renamed stats key for backend/index stores stats - #2
+ATLAS-3110: added REST API to get multiple entities given their unique attribute values
+ATLAS-3084: setting default value to the relationship attributes
+ATLAS-3128: UI: Create entity is not working after new relationship attribute introduce
+ATLAS-2458: RelationshipApi Delete doesnt remove relationshipAttributes from entity
+ATLAS-3127: UI : On Load Graph zoom buttons (+/-) is visible on top of relationship Table.
+ATLAS-3116: Changed bean scope to prototype to fix LDAP login, once a sign-on is made through knox SSO.
+ATLAS-3090: PC Framework: Improve Existing Producer Consumer Framework
+ATLAS-3091: AtlasGraphProvider Support for Graph with Batch-loading Enable
+ATLAS-3105: UI : Distorted image is downloaded, for certain conditions
+ATLAS-3103: UI : Render schema table from relationshipattributes node in the entity API
+ATLAS-3092: Atlas Plugin ClassLoader Doesn't Restore Thread ClassLoader
+ATLAS-3071: updated stats/metrics module to collect notification metrics
+ATLAS-3017: Add Atlas server statistics rest endpoint #renaming fields
+ATLAS-3054: updated notification pre-process to handle updates to ownedRef attributes - #3
+ATLAS-3113: Use index query to search for active entities and better logging in java patch framework
+ATLAS-2933: Empty array attributes are returned as null instead of an empty list
+ATLAS-3017: Add Atlas server statistics rest endpoint
+ATLAS-3109: added option to ignore relationshipAttributes in AtlasEntityStore.getByUniqueAttributes
+ATLAS-3107: updated AtlasEntityDef with addition of read-only field relationshipAttributeDefs
+ATLAS-3104: Fix stale transaction alerts in atlas logs
+ATLAS-3102: updated copy constructor of AtlasBaseTypeDef to copy serviceType
+ATLAS-3101: UI Regression : Unable to search by _CLASSIFIED and _NOT_CLASSIFIED
+ATLAS-3097: added ctors for serviceType in AtlasRelationshipDef
+ATLAS-3099: Update graph storage and index backend property to be configurable
+ATLAS-3095: Update QuickStartV2 to use relationships
+ATLAS-3089: PC Framework Moved to Intg Module
+ATLAS-3096: Missing AtlasEntityDef constructors for serviceTpe
+ATLAS-3001: fixed serialization error in AtlasClientV2.updateClassifications()
+ATLAS-3064: Resolving repo URL and Maven version.
+ATLAS-3075: Add tag propagation details in relationship notification message
+ATLAS-3067: Fix UT failures related to ATLAS-3077
+ATLAS-3077: Handle java patches in patch framework
+ATLAS-3093: UI : Fix to add missing tooltips to lineage page.
+ATLAS-3067: Fix intermittent IT failure in HiveHookIT.testAlterTableLocation()
+ATLAS-3067: fix for IT failure in EntityJerseyResourceIT.testCompleteUpdate()
+ATLAS-3031: UI : Allow user to export the lineage in PNG format
+ATLAS-2945: UI - If a Term is assigned to an Category then to user is able to assign the same term again
+ATLAS-3083: Disable SSLAndKerberosTest & SSLTest etc Unitcases
+ATLAS-3070: Create patch framework to persist typedef patches applied to atlas #2 fix getPatches() method
+ATLAS-3073: Investigate and fix IT failures in atlas-distro module #2
+ATLAS-3076: UI: Relationship Tab improvements - #2
+ATLAS-3076: UI : Relationship Tab improvements.
+ATLAS-2987: Update component versions of Atlas to use Hadoop3, HBase2 and Solr7
+ATLAS-3067: fix for IT failures caused by changes in hive-preprocessor
+ATLAS-3073: Investigate and fix IT failures in AdminExportImportTestIT
+ATLAS-3069: avoid repeated warnings of missing relationship-def
+ATLAS-3057: Atlas Index Repair tool for JanusGraph
+ATLAS-3070: Create patch framework to persist typedef patches applied to atlas
+ATLAS-3072: UI : Increasing the width of the Lineage slider.
+ATLAS-2945: UI - If a Term is assigned to an Category then to user is able to assign the same term again
+ATLAS-3054: improved batch processing in notificaiton handler to avoid processing of an entity multiple times - #2
+ATLAS-3041: fix for failure in deleting relationship-def by name
+ATLAS-3073: Investigate and fix IT failures in EntityJerseyResourceIT
+ATLAS-3065: fix incorrect name (rename typeDefOptions to options) in merged models for Hive and RDBMS
+ATLAS-3065: include removed legacy attributes in entity.attributes for backward compatibility (in addition to entity.relationshipAttributes) - #3
+ATLAS-3067: updated hive types to remove use of ownedRef/inverseRef attributes
+ATLAS-3056: updated rdbms types to remove use of ownedRef/inverseRef - #2
+ATLAS-3063: updated entity create/update to enable relationship-type to be specified for relationship attributes
+ATLAS-3065: added type-patch to remove legacy attributes - #2
+ATLAS-3066: UI : Fix various table layouts & improvements.
+ATLAS-3065: added type-patch to remove legacy attributes
+ATLAS-3062: UI : Add relationship table inside relationships tab #2 fix date format
+ATLAS-3062: Add icons for impala process and impala column lineage
+ATLAS-3062: UI : Add relationship table inside relationships tab
+ATLAS-3060: UI: Allow to drag node and place it accordingly
+ATLAS-3061: UI Search Term is not working
+ATLAS-3059: UI : Lineage data structure change to support hide deleted and hide process entities to gather
+ATLAS-3058: fix for failure in saved-search
+ATLAS-3030: UI : Allow to search the node in the lineage graph
+ATLAS-3056: updated rdbms types to remove use of ownedRef/inverseRef
+ATLAS-3055: updated entity create/update to handle relationship attributes consistently
+ATLAS-3054: updated notification processing to support batch-commits
+ATLAS-2949: Remove duplicate attribute from the rdbms entity
+ATLAS-3053: updated notification processing to propagate classifications only when specified
+ATLAS-3052: removed caching of metrics query results
+ATLAS-3051: on container entity-delete, contained entities in composition relationship should be deleted
+ATLAS-3044: fixed import to handle entity-delete
+ATLAS-3043: added unique-attributes constraints at store-level
+ATLAS-2810: Add notifications from RelationshipStore to Kafka ATLAS_ENTITITES topic.
+ATLAS-3037: fixed entity-updated detection to handle object-id attributes correctly
+ATLAS-2953: UI : Lineage show detail popup while clicking on node
+ATLAS-3015: Classification Updater tool.
+ATLAS-3035: updated entity-get/delete to retrieve/delete soft-ref entities
+ATLAS-3034: Perf enhancement to avoid unnecessary lookup when creating new relationships
+ATLAS-3029, ATLAS-3020: Audit APIs for classification updates. Part-2.
+ATLAS-3029: Audit APIs for classification updates.
+ATLAS-3020: Audit APIs for classification updates.
+ATLAS-2994: UI - If Hide deleted entity filter is applied then to UI displays deleted entity in lineage
+ATLAS-3025: UI - If go to page is more/less then the available page limit then an error appears in the console
+ATLAS-3027: UI : Metric modal Improvements
+ATLAS-3026: Column level lineage show the invalid icon for the process
+ATLAS-3010: UI - Lineage hide process filter is not working
+ATLAS-3023: UI - If any entity is deleted then its record is not displayed in Deleted Entities Statistics model
+ATLAS-3006: Option to ignore/prune metadata for temporary/staging Hive tables
+ATLAS-3018: UI - classification search table shows then Basic search text with loader which is incorrect
+ATLAS-3019: Handle NPE while transform and adding replicatedTo in import-export
+ATLAS-3005: Modal for metrics statistic added
+ATLAS-3007: UI : Add go to page and page limit option for local pagination
+ATLAS-3009: UI - Please provide Full screen support for Lineage
+ATLAS-2998: UI : create entity icon for atlas-core type and aws
+ATLAS-2979: Added service type dropdown to filter entitydef type
+ATLAS-2995: Added new API method to disassociate the term assignment from entity.
+ATLAS-3002: added instrumentation to collect time taken for sub-tasks during entity create/update
+ATLAS-2969: Addressed UniformInterfaceException from earlier commit.
+ATLAS-2983: Fixes and clean up for Atlas Kafka bridge utility
+ATLAS-2979: added serviceType field to AtlasTypeDefHeader
+ATLAS-2980: fix HBaseBasedAuditRepository.putEventsV2() to store entity-json string
+ATLAS-2970: UI: Show counts besides the Type and Classification dropdown list in search
+ATLAS-2968: Update model files to include service-type for each entityDef - #2
+ATLAS-2968: Update model files to include service-type for each entityDef
+ATLAS-2967: set and read homeId in relationship
+ATLAS-2971: Atlas fails to start if there is a empty pid file
+ATLAS-2969: Attempt to import empty zip file should not throw excpetion
+ATLAS-2774: enhancement to support parameterized delete-type (hard or soft) per API call
+ATLAS-2959: Update metrics query to use index query instead of graph query for faster response
+ATLAS-2958: updated hooks to log exceptions on all notification failures
+ATLAS-2957: Fix and enable disabled StormHook Integrations Tests
+ATLAS-2954: Build failed with Rat check on Master Branch
+ATLAS-2839: Export-Import New Features Documentation.
+ATLAS-2947: name of Kafka topics used by Atlas made configurable
+ATLAS-2938: EntityGraphMapper stores updated version number
+ATLAS-2936: Ability to store provenance type
+ATLAS-2941: Add schema rendering attribute for rdbms type
+ATLAS-2934: utility to detect and repair incorrect entity state
+ATLAS-2942: Audit tab changes to display proper data on detail modal view
+ATLAS-2925: Better logging for graph database initialization error
+ATLAS-2996: Conditionally Prevent Notification Processing
+
+--------------------
 Celtic-GA Changes
 --------------------
 
