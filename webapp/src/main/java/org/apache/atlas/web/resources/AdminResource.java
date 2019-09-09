@@ -372,9 +372,8 @@ public class AdminResource {
 
         try {
             AtlasImportRequest request = AtlasType.fromJson(jsonData, AtlasImportRequest.class);
-            ZipSource zipSource = new ZipSource(inputStream);
 
-            result = importService.run(zipSource, request, Servlets.getUserName(httpServletRequest),
+            result = importService.run(inputStream, request, Servlets.getUserName(httpServletRequest),
                     Servlets.getHostName(httpServletRequest),
                     AtlasAuthorizationUtils.getRequestIpAddress(httpServletRequest));
         } catch (Exception excp) {

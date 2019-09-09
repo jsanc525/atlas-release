@@ -198,7 +198,7 @@ public class ExportServiceTest {
         assertEquals(request, result.getRequest());
     }
 
-    @Test
+    @Test(expectedExceptions = AtlasBaseException.class)
     public void requestingEntityNotFound_NoData() throws AtlasBaseException, IOException {
         String requestingIP = "1.0.0.0";
         String hostName = "root";
@@ -211,11 +211,7 @@ public class ExportServiceTest {
         Assert.assertNull(result.getData());
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-        ZipSource zipSource = new ZipSource(bais);
-
-        assertNotNull(exportService);
-        assertNotNull(zipSource.getCreationOrder());
-        Assert.assertFalse(zipSource.hasNext());
+        new ZipSource(bais);
     }
 
     @Test
@@ -288,15 +284,11 @@ public class ExportServiceTest {
                 AtlasExportResult.OperationStatus.FAIL));
     }
 
-    @Test
+    @Test(expectedExceptions = AtlasBaseException.class)
     public void requestingExportOfNonExistentEntity_ReturnsFailure() throws Exception {
         AtlasExportRequest request = getRequestForEmployee();
         tamperEmployeeRequest(request);
-        ZipSource zipSource = runExportWithParameters(request);
-
-        assertNotNull(zipSource.getCreationOrder());
-        assertEquals(zipSource.getCreationOrder().size(), 0);
-        assertEquals(AtlasExportResult.OperationStatus.FAIL, zipSource.getExportResult().getOperationStatus());
+        runExportWithParameters(request);
     }
 
     private void tamperEmployeeRequest(AtlasExportRequest request) {

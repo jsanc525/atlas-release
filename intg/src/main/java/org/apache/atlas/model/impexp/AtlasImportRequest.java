@@ -18,11 +18,13 @@
 package org.apache.atlas.model.impexp;
 
 import org.apache.atlas.model.typedef.AtlasBaseTypeDef;
+import org.apache.commons.collections.MapUtils;
 import org.codehaus.jackson.annotate.JsonAnySetter;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -38,6 +40,7 @@ public class AtlasImportRequest implements Serializable {
     private static final long   serialVersionUID = 1L;
 
     public  static final String TRANSFORMS_KEY             = "transforms";
+    public  static final String TRANSFORMERS_KEY           = "transformers";
     private static final String START_POSITION_KEY         = "startPosition";
     private static final String START_GUID_KEY             = "startGuid";
     private static final String FILE_NAME_KEY              = "fileName";
@@ -98,7 +101,7 @@ public class AtlasImportRequest implements Serializable {
     }
 
     private String getOptionForKey(String key) {
-        if (this.options == null || !this.options.containsKey(key)) {
+        if (MapUtils.isEmpty(this.options) || !this.options.containsKey(key)) {
             return null;
         }
 

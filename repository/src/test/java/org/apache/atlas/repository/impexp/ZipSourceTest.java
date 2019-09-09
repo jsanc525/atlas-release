@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static org.apache.atlas.repository.impexp.ZipFileResourceTestUtils.getZipSource;
@@ -38,31 +39,29 @@ import static org.testng.AssertJUnit.assertTrue;
 
 public class ZipSourceTest {
     @DataProvider(name = "zipFileStocks")
-    public static Object[][] getDataFromZipFile() throws IOException {
+    public static Object[][] getDataFromZipFile() throws IOException, AtlasBaseException {
         FileInputStream fs = ZipFileResourceTestUtils.getFileInputStream("stocks.zip");
 
         return new Object[][] {{ new ZipSource(fs) }};
     }
 
     @DataProvider(name = "zipFileStocksFloat")
-    public static Object[][] getDataFromZipFileWithLongFloats() throws IOException {
+    public static Object[][] getDataFromZipFileWithLongFloats() throws IOException, AtlasBaseException {
         FileInputStream fs = ZipFileResourceTestUtils.getFileInputStream("stocks-float.zip");
 
         return new Object[][] {{ new ZipSource(fs) }};
     }
 
     @DataProvider(name = "sales")
-    public static Object[][] getDataFromQuickStart_v1_Sales(ITestContext context) throws IOException {
+    public static Object[][] getDataFromQuickStart_v1_Sales(ITestContext context) throws IOException, AtlasBaseException {
         return getZipSource("sales-v1-full.zip");
     }
 
-    @Test
+    @Test(expectedExceptions = AtlasBaseException.class)
     public void improperInit_ReturnsNullCreationOrder() throws IOException, AtlasBaseException {
         byte bytes[] = new byte[10];
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         ZipSource zs = new ZipSource(bais);
-        List<String> s = zs.getCreationOrder();
-        Assert.assertNull(s);
     }
 
     @Test(dataProvider = "zipFileStocks")
@@ -127,7 +126,8 @@ public class ZipSourceTest {
     }
 
     @Test(dataProvider = "sales")
-    public void iteratorSetPositionBehavor(ZipSource zipSource) throws IOException, AtlasBaseException {
+    public void iteratorSetPositionBehavor(InputStream inputStream) throws IOException, AtlasBaseException {
+        ZipSource zipSource = new ZipSource(inputStream);
         Assert.assertTrue(zipSource.hasNext());
 
         List<String> creationOrder = zipSource.getCreationOrder();
