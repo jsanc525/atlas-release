@@ -147,7 +147,7 @@ public abstract class Action {
             AtlasEntity entity = transformableEntity.getEntity();
 
             if (entity.getClassifications() == null) {
-                entity.setClassifications(new ArrayList<>());
+                entity.setClassifications(new ArrayList<AtlasClassification>());
             }
 
             boolean hasClassification = false;

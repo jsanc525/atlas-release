@@ -26,18 +26,26 @@ import org.apache.atlas.model.impexp.AtlasImportRequest;
 import org.apache.atlas.model.impexp.AtlasImportResult;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
 import org.apache.atlas.repository.store.bootstrap.AtlasTypeDefStoreInitializer;
+import org.apache.atlas.repository.store.graph.v1.AtlasEntityStoreV1;
+import org.apache.atlas.repository.store.graph.v1.AtlasEntityStreamForImport;
+import org.apache.atlas.repository.store.graph.v1.EntityImportStream;
 import org.apache.atlas.store.AtlasTypeDefStore;
 import org.apache.atlas.type.AtlasType;
 import org.apache.atlas.type.AtlasTypeRegistry;
 import org.apache.atlas.utils.TestResourceFileUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.solr.common.StringUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,12 +85,13 @@ public class ZipFileResourceTestUtils {
         return s;
     }
 
-    public static Object[][] getZipSource(String fileName) throws IOException {
-        FileInputStream fs = ZipFileResourceTestUtils.getFileInputStream(fileName);
-
-        return new Object[][]{{new ZipSource(fs)}};
+    public static Object[][] getZipSource(String fileName) throws IOException, AtlasBaseException {
+        return new Object[][]{{getInputStreamFrom(fileName)}};
     }
 
+    public static InputStream getInputStreamFrom(String fileName) {
+        return ZipFileResourceTestUtils.getFileInputStream(fileName);
+    }
 
     public static void verifyImportedEntities(List<String> creationOrder, List<String> processedEntities) {
         Set<String> lhs = com.google.common.collect.Sets.newHashSet(creationOrder);
@@ -152,27 +161,42 @@ public class ZipFileResourceTestUtils {
     }
 
 
-    public static AtlasImportResult runImportWithParameters(ImportService importService, AtlasImportRequest request, ZipSource source) throws AtlasBaseException, IOException {
+    public static AtlasImportResult runImportWithParameters(ImportService importService, AtlasImportRequest request, InputStream inputStream) throws AtlasBaseException, IOException {
         final String requestingIP = "1.0.0.0";
         final String hostName = "localhost";
         final String userName = "admin";
 
-        AtlasImportResult result = importService.run(source, request, userName, hostName, requestingIP);
+        AtlasImportResult result = importService.run(inputStream, request, userName, hostName, requestingIP);
         assertEquals(result.getOperationStatus(), AtlasImportResult.OperationStatus.SUCCESS);
         return result;
     }
 
-    public static AtlasImportResult runImportWithNoParameters(ImportService importService, ZipSource source) throws AtlasBaseException, IOException {
+    public static AtlasImportResult runImportWithNoParameters(ImportService importService, InputStream inputStream) throws AtlasBaseException, IOException {
         final String requestingIP = "1.0.0.0";
         final String hostName = "localhost";
         final String userName = "admin";
 
-        AtlasImportResult result = importService.run(source, userName, hostName, requestingIP);
+        AtlasImportResult result = importService.run(inputStream, userName, hostName, requestingIP);
         assertEquals(result.getOperationStatus(), AtlasImportResult.OperationStatus.SUCCESS);
         return result;
     }
 
-    public static void runAndVerifyQuickStart_v1_Import(ImportService importService, ZipSource zipSource) throws AtlasBaseException, IOException {
+    public static AtlasImportResult runImportWithNoParametersUsingBackingDirectory(ImportService importService, InputStream inputStream) throws AtlasBaseException, IOException {
+        final String requestingIP = "1.0.0.0";
+        final String hostName = "localhost";
+        final String userName = "admin";
+
+        EntityImportStream sourceWithBackingDirectory = new ZipSourceWithBackingDirectory(inputStream, Files.createTempDirectory("temp").toString());
+        AtlasImportResult result = importService.run(sourceWithBackingDirectory,  new AtlasImportRequest(), userName, hostName, requestingIP);
+        assertEquals(result.getOperationStatus(), AtlasImportResult.OperationStatus.SUCCESS);
+        return result;
+    }
+
+    public static void runAndVerifyQuickStart_v1_Import(ImportService importService, InputStream is) throws AtlasBaseException, IOException {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        IOUtils.copy(is, baos);
+
+        ZipSource zipSource = new ZipSource(new ByteArrayInputStream(baos.toByteArray()));
         AtlasExportResult exportResult = zipSource.getExportResult();
         List<String> creationOrder = zipSource.getCreationOrder();
 
@@ -180,7 +204,7 @@ public class ZipFileResourceTestUtils {
         RequestContextV1.get().setUser(TestUtilsV2.TEST_USER);
 
         AtlasImportRequest request = getDefaultImportRequest();
-        AtlasImportResult result = runImportWithParameters(importService, request, zipSource);
+        AtlasImportResult result = runImportWithParameters(importService, request, new ByteArrayInputStream(baos.toByteArray()));
 
         assertNotNull(result);
         verifyImportedMetrics(exportResult, result);

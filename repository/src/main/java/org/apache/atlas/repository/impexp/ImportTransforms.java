@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ImportTransforms {
     private static final Logger LOG = LoggerFactory.getLogger(ImportTransforms.class);
@@ -65,6 +66,27 @@ public class ImportTransforms {
         }
 
         return entityWithExtInfo;
+    }
+
+    public Set<String> getTypes() {
+        return getTransforms().keySet();
+    }
+
+    public void addParentTransformsToSubTypes(String parentType, Set<String> subTypes) {
+        Map<String, List<ImportTransformer>> attribtueTransformMap = getTransforms().get(parentType);
+        for (String subType : subTypes) {
+            if(!getTransforms().containsKey(subType)) {
+                getTransforms().put(subType, attribtueTransformMap);
+            } else {
+                for (Map.Entry<String, List<ImportTransformer>> entry : attribtueTransformMap.entrySet()) {
+                    if((getTransforms().get(subType).containsKey(entry.getKey()))){
+                        getTransforms().get(subType).get(entry.getKey()).addAll(entry.getValue());
+                    } else {
+                        LOG.warn("Attribute {} does not exist for Type : {}", entry.getKey(), parentType);
+                    }
+                }
+            }
+        }
     }
 
     public  AtlasEntity apply(AtlasEntity entity) throws AtlasBaseException {
