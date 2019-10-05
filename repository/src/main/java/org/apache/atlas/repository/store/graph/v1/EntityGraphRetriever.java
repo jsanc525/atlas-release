@@ -743,12 +743,55 @@ public final class EntityGraphRetriever {
                     }
 
                     if (entity != null) {
-                        ret = AtlasTypeUtil.getAtlasObjectId(entity);
+                        ret = toAtlasObjectId(entity);
                     }
                 } else {
-                    ret = new AtlasObjectId(GraphHelper.getGuid(referenceVertex), GraphHelper.getTypeName(referenceVertex));
+                    ret = toAtlasObjectId(referenceVertex);
                 }
             }
+        }
+
+        return ret;
+    }
+
+    private AtlasObjectId toAtlasObjectId(AtlasEntity entity) {
+        AtlasObjectId   ret        = null;
+        AtlasEntityType entityType = typeRegistry.getEntityTypeByName(entity.getTypeName());
+
+        if (entityType != null) {
+            Map<String, Object> uniqueAttributes = new HashMap<>();
+
+            for (String attributeName : entityType.getUniqAttributes().keySet()) {
+                Object attrValue = entity.getAttribute(attributeName);
+
+                if (attrValue != null) {
+                    uniqueAttributes.put(attributeName, attrValue);
+                }
+            }
+
+            ret = new AtlasObjectId(entity.getGuid(), entity.getTypeName(), uniqueAttributes);
+        }
+
+        return ret;
+    }
+
+    private AtlasObjectId toAtlasObjectId(AtlasVertex entityVertex) throws AtlasBaseException {
+        AtlasObjectId   ret        = null;
+        String          typeName   = entityVertex.getProperty(Constants.TYPE_NAME_PROPERTY_KEY, String.class);
+        AtlasEntityType entityType = typeRegistry.getEntityTypeByName(typeName);
+
+        if (entityType != null) {
+            Map<String, Object> uniqueAttributes = new HashMap<>();
+
+            for (AtlasAttribute attribute : entityType.getUniqAttributes().values()) {
+                Object attrValue = getVertexAttribute(entityVertex, attribute);
+
+                if (attrValue != null) {
+                    uniqueAttributes.put(attribute.getName(), attrValue);
+                }
+            }
+
+            ret = new AtlasObjectId(entityVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class), typeName, uniqueAttributes);
         }
 
         return ret;
