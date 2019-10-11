@@ -17,6 +17,7 @@
  */
 package org.apache.atlas.kafka;
 
+import com.google.gson.JsonSyntaxException;
 import org.apache.atlas.notification.AbstractNotificationConsumer;
 import org.apache.atlas.notification.AtlasNotificationMessageDeserializer;
 import org.apache.atlas.notification.NotificationInterface;
@@ -82,6 +83,9 @@ public class AtlasKafkaConsumer<T> extends AbstractNotificationConsumer<T> {
                 } catch (OutOfMemoryError excp) {
                     LOG.error("Ignoring message that failed to deserialize: topic={}, partition={}, offset={}, key={}, value={}",
                               record.topic(), record.partition(), record.offset(), record.key(), record.value(), excp);
+                } catch (JsonSyntaxException jse) {
+                    LOG.error("Ignoring message that failed to deserialize: topic={}, partition={}, offset={}, key={}, value={}",
+                            record.topic(), record.partition(), record.offset(), record.key(), record.value(), jse);
                 }
 
                 if (message == null) {
