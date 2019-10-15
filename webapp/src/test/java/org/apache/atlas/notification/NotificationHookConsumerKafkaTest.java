@@ -41,8 +41,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -84,7 +84,7 @@ public class NotificationHookConsumerKafkaTest {
     @Mock
     private AtlasMetricsUtil metricsUtil;
 
-    @BeforeTest
+    @BeforeMethod
     public void setup() throws AtlasException, InterruptedException, AtlasBaseException {
         MockitoAnnotations.initMocks(this);
 
@@ -98,7 +98,7 @@ public class NotificationHookConsumerKafkaTest {
         initNotificationService();
     }
 
-    @AfterTest
+    @AfterMethod
     public void shutdown() {
         cleanUpNotificationService();
     }
@@ -120,7 +120,6 @@ public class NotificationHookConsumerKafkaTest {
         consumeOneMessage(consumer, hookConsumer);
 
         verify(atlasEntityStore,times(2)).createOrUpdate(any(EntityStream.class), anyBoolean());
-        reset(atlasEntityStore);
     }
 
     @Test
@@ -151,8 +150,6 @@ public class NotificationHookConsumerKafkaTest {
         consumeOneMessage(consumer, hookConsumer);
 
         assertNull(failedCommitOffsetRecorder.getCurrentOffset());
-
-        reset(atlasEntityStore);
     }
 
     @Test(dependsOnMethods = "testConsumerConsumesNewMessageWithAutoCommitDisabled")
