@@ -19,25 +19,32 @@ package org.apache.atlas.entitytransform;
 
 import org.apache.atlas.entitytransform.BaseEntityHandler.AtlasTransformableEntity;
 import org.apache.atlas.model.impexp.AttributeTransform;
+import org.apache.atlas.model.instance.AtlasObjectId;
+import org.apache.atlas.type.AtlasType;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 
 public class AtlasEntityTransformer {
     private final List<Condition> conditions;
     private final List<Action>    actions;
 
-
-    public AtlasEntityTransformer(AttributeTransform attributeTransform, TransformerContext context) {
-        this(attributeTransform.getConditions(), attributeTransform.getAction(), context);
+    public AtlasEntityTransformer(AttributeTransform attributeTransform) {
+        this(attributeTransform.getConditions(), attributeTransform.getAction());
     }
 
-    public AtlasEntityTransformer(Map<String, String> conditions, Map<String, String> actions, TransformerContext context) {
-        this.conditions = createConditions(conditions, context);
-        this.actions    = createActions(actions, context);
+    public AtlasEntityTransformer(AtlasObjectId objectId, Map<String, String> actions) {
+        this(Collections.singletonMap("__entity", AtlasType.toJson(objectId)), actions);
+    }
+
+    public AtlasEntityTransformer(Map<String, String> conditions, Map<String, String> actions) {
+        this.conditions = createConditions(conditions);
+        this.actions    = createActions(actions);
     }
 
     public List<Condition> getConditions() {
@@ -64,12 +71,12 @@ public class AtlasEntityTransformer {
         }
     }
 
-    private List<Condition> createConditions(Map<String, String> conditions, TransformerContext context) {
+    private List<Condition> createConditions(Map<String, String> conditions) {
         List<Condition> ret = new ArrayList<>();
 
         if (MapUtils.isNotEmpty(conditions)) {
             for (Map.Entry<String, String> entry : conditions.entrySet()) {
-                Condition condition = Condition.createCondition(entry.getKey(), entry.getValue(), context);
+                Condition condition = Condition.createCondition(entry.getKey(), entry.getValue());
 
                 ret.add(condition);
             }
@@ -78,12 +85,12 @@ public class AtlasEntityTransformer {
         return ret;
     }
 
-    private List<Action> createActions(Map<String, String> actions, TransformerContext context) {
+    private List<Action> createActions(Map<String, String> actions) {
         List<Action> ret = new ArrayList<>();
 
         if (MapUtils.isNotEmpty(actions)) {
             for (Map.Entry<String, String> entry : actions.entrySet()) {
-                Action action = Action.createAction(entry.getKey(), entry.getValue(), context);
+                Action action = Action.createAction(entry.getKey(), entry.getValue());
 
                 ret.add(action);
             }

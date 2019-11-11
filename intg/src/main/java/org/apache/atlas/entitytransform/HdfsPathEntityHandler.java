@@ -35,10 +35,10 @@ import static org.apache.atlas.entitytransform.TransformationConstants.QUALIFIED
 
 
 public class HdfsPathEntityHandler extends BaseEntityHandler {
-    static final List<String> CUSTOM_TRANSFORM_ATTRIBUTES = Arrays.asList(HDFS_PATH_NAME_ATTRIBUTE, HDFS_PATH_PATH_ATTRIBUTE, HDFS_CLUSTER_NAME_ATTRIBUTE);
+    private static final List<String> CUSTOM_TRANSFORM_ATTRIBUTES = Arrays.asList(HDFS_PATH_NAME_ATTRIBUTE, HDFS_PATH_PATH_ATTRIBUTE, HDFS_CLUSTER_NAME_ATTRIBUTE);
 
     public HdfsPathEntityHandler(List<AtlasEntityTransformer> transformers) {
-        super(transformers);
+        super(transformers, CUSTOM_TRANSFORM_ATTRIBUTES);
     }
 
     @Override
@@ -56,8 +56,8 @@ public class HdfsPathEntityHandler extends BaseEntityHandler {
         private String  path;
         private String  name;
         private String  pathPrefix;
-        private boolean isPathUpdated            = false;
-        private boolean isCustomAttributeUpdated = false;
+        private boolean isPathUpdated              = false;
+        private boolean isCustomerAttributeUpdated = false;
 
 
         public HdfsPathEntity(AtlasEntity entity) {
@@ -93,8 +93,8 @@ public class HdfsPathEntityHandler extends BaseEntityHandler {
         }
 
         @Override
-        public Object getAttribute(EntityAttribute attribute) {
-            switch (attribute.getAttributeKey()) {
+        public Object getAttribute(String attributeName) {
+            switch (attributeName) {
                 case HDFS_CLUSTER_NAME_ATTRIBUTE:
                     return clusterName;
 
@@ -105,40 +105,40 @@ public class HdfsPathEntityHandler extends BaseEntityHandler {
                     return path;
             }
 
-            return super.getAttribute(attribute);
+            return super.getAttribute(attributeName);
         }
 
         @Override
-        public void setAttribute(EntityAttribute attribute, String attributeValue) {
-            switch (attribute.getAttributeKey()) {
+        public void setAttribute(String attributeName, String attributeValue) {
+            switch (attributeName) {
                 case HDFS_CLUSTER_NAME_ATTRIBUTE:
                     clusterName = attributeValue;
 
-                    isCustomAttributeUpdated = true;
+                    isCustomerAttributeUpdated = true;
                 break;
 
                 case HDFS_PATH_NAME_ATTRIBUTE:
                     name = attributeValue;
 
-                    isCustomAttributeUpdated = true;
+                    isCustomerAttributeUpdated = true;
                 break;
 
                 case HDFS_PATH_PATH_ATTRIBUTE:
                     path = attributeValue;
 
                     isPathUpdated              = true;
-                    isCustomAttributeUpdated = true;
+                    isCustomerAttributeUpdated = true;
                 break;
 
                 default:
-                    super.setAttribute(attribute, attributeValue);
+                    super.setAttribute(attributeName, attributeValue);
                 break;
             }
         }
 
         @Override
         public void transformComplete() {
-            if (isCustomAttributeUpdated) {
+            if (isCustomerAttributeUpdated) {
                 entity.setAttribute(CLUSTER_NAME_ATTRIBUTE, clusterName);
                 entity.setAttribute(NAME_ATTRIBUTE, name);
                 entity.setAttribute(PATH_ATTRIBUTE, toPath());

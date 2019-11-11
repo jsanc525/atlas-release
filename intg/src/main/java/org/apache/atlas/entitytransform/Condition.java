@@ -17,9 +17,7 @@
  */
 package org.apache.atlas.entitytransform;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.atlas.entitytransform.BaseEntityHandler.AtlasTransformableEntity;
-import org.apache.atlas.model.impexp.AtlasExportRequest;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 
 
 public abstract class Condition {
@@ -46,19 +43,18 @@ public abstract class Condition {
     private static final String CONDITION_NAME_STARTS_WITH_IGNORE_CASE = "STARTS_WITH_IGNORE_CASE";
     private static final String CONDITION_NAME_HAS_VALUE               = "HAS_VALUE";
 
-    protected final EntityAttribute attribute;
+    protected final String attributeName;
 
-
-    protected Condition(EntityAttribute attribute) {
-        this.attribute = attribute;
+    protected Condition(String attributeName) {
+        this.attributeName = attributeName;
     }
 
-    public EntityAttribute getAttribute() { return attribute; }
+    public String getAttributeName() { return attributeName; }
 
     public abstract boolean matches(AtlasTransformableEntity entity);
 
 
-    public static Condition createCondition(String key, String value, TransformerContext context) {
+    public static Condition createCondition(String key, String value) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("==> Condition.createCondition(key={}, value={})", key, value);
         }
@@ -73,43 +69,41 @@ public abstract class Condition {
         conditionValue = StringUtils.trim(conditionValue);
         value          = StringUtils.trim(value);
 
-        EntityAttribute attribute = new EntityAttribute(StringUtils.trim(key), context);
-
         switch (conditionName.toUpperCase()) {
             case CONDITION_ENTITY_ALL:
-                ret = new ObjectIdEquals(attribute, CONDITION_ENTITY_ALL, context);
+                ret = new ObjectIdEquals(key, CONDITION_ENTITY_ALL);
                 break;
 
             case CONDITION_ENTITY_TOP_LEVEL:
-                ret = new ObjectIdEquals(attribute, CONDITION_ENTITY_TOP_LEVEL, context);
+                ret = new ObjectIdEquals(key, CONDITION_ENTITY_TOP_LEVEL);
                 break;
 
             case CONDITION_ENTITY_OBJECT_ID:
-                ret = new ObjectIdEquals(attribute, conditionValue, context);
+                ret = new ObjectIdEquals(key, conditionValue);
                 break;
 
             case CONDITION_NAME_EQUALS:
-                ret = new EqualsCondition(attribute, conditionValue);
+                ret = new EqualsCondition(key, conditionValue);
             break;
 
             case CONDITION_NAME_EQUALS_IGNORE_CASE:
-                ret = new EqualsIgnoreCaseCondition(attribute, conditionValue);
+                ret = new EqualsIgnoreCaseCondition(key, conditionValue);
             break;
 
             case CONDITION_NAME_STARTS_WITH:
-                ret = new StartsWithCondition(attribute, conditionValue);
+                ret = new StartsWithCondition(key, conditionValue);
             break;
 
             case CONDITION_NAME_STARTS_WITH_IGNORE_CASE:
-                ret = new StartsWithIgnoreCaseCondition(attribute, conditionValue);
+                ret = new StartsWithIgnoreCaseCondition(key, conditionValue);
             break;
 
             case CONDITION_NAME_HAS_VALUE:
-                ret = new HasValueCondition(attribute);
+                ret = new HasValueCondition(key, conditionValue);
                 break;
 
             default:
-                ret = new EqualsCondition(attribute, value); // treat unspecified/unknown condition as 'EQUALS'
+                ret = new EqualsCondition(key, value); // treat unspecified/unknown condition as 'EQUALS'
             break;
         }
 
@@ -124,15 +118,15 @@ public abstract class Condition {
     public static class EqualsCondition extends Condition {
         protected final String attributeValue;
 
-        public EqualsCondition(EntityAttribute attribute, String attributeValue) {
-            super(attribute);
+        public EqualsCondition(String attributeName, String attributeValue) {
+            super(attributeName);
 
             this.attributeValue = attributeValue;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            Object attributeValue = entity != null ? entity.getAttribute(attribute) : null;
+            Object attributeValue = entity != null ? entity.getAttribute(attributeName) : null;
 
             return attributeValue != null && StringUtils.equals(attributeValue.toString(), this.attributeValue);
         }
@@ -142,15 +136,15 @@ public abstract class Condition {
     public static class EqualsIgnoreCaseCondition extends Condition {
         protected final String attributeValue;
 
-        public EqualsIgnoreCaseCondition(EntityAttribute attribute, String attributeValue) {
-            super(attribute);
+        public EqualsIgnoreCaseCondition(String attributeName, String attributeValue) {
+            super(attributeName);
 
             this.attributeValue = attributeValue;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            Object attributeValue = entity != null ? entity.getAttribute(attribute) : null;
+            Object attributeValue = entity != null ? entity.getAttribute(attributeName) : null;
 
             return attributeValue != null && StringUtils.equalsIgnoreCase(attributeValue.toString(), this.attributeValue);
         }
@@ -160,15 +154,15 @@ public abstract class Condition {
     public static class StartsWithCondition extends Condition {
         protected final String prefix;
 
-        public StartsWithCondition(EntityAttribute attribute, String prefix) {
-            super(attribute);
+        public StartsWithCondition(String attributeName, String prefix) {
+            super(attributeName);
 
             this.prefix = prefix;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            Object attributeValue = entity != null ? entity.getAttribute(attribute) : null;
+            Object attributeValue = entity != null ? entity.getAttribute(attributeName) : null;
 
             return attributeValue != null && StringUtils.startsWith(attributeValue.toString(), this.prefix);
         }
@@ -178,89 +172,96 @@ public abstract class Condition {
     public static class StartsWithIgnoreCaseCondition extends Condition {
         protected final String prefix;
 
-        public StartsWithIgnoreCaseCondition(EntityAttribute attribute, String prefix) {
-            super(attribute);
+        public StartsWithIgnoreCaseCondition(String attributeName, String prefix) {
+            super(attributeName);
 
             this.prefix = prefix;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            Object attributeValue = entity != null ? entity.getAttribute(attribute) : null;
+            Object attributeValue = entity != null ? entity.getAttribute(attributeName) : null;
 
             return attributeValue != null && StringUtils.startsWithIgnoreCase(attributeValue.toString(), this.prefix);
         }
     }
 
-    static class ObjectIdEquals extends Condition {
-        private final boolean             isMatchAll;
+    static class ObjectIdEquals extends Condition implements NeedsContext {
         private final List<AtlasObjectId> objectIds;
+        private String scope;
+        private TransformerContext transformerContext;
 
-        public ObjectIdEquals(EntityAttribute attribute, String scope, TransformerContext context) {
-            super(attribute);
+        public ObjectIdEquals(String key, String conditionValue) {
+            super(key);
 
-            this.isMatchAll = StringUtils.equals(scope, CONDITION_ENTITY_ALL);
-            this.objectIds  = new ArrayList<>();
-
-            if (!isMatchAll && context != null && context.getExportRequest() != null) {
-                AtlasExportRequest request = context.getExportRequest();
-
-                for(AtlasObjectId objectId : request.getItemsToExport()) {
-                    addObjectId(objectId);
-                }
-            }
+            objectIds = new ArrayList<>();
+            this.scope = conditionValue;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            if (isMatchAll) {
-                return true;
-            } else {
-                for (AtlasObjectId objectId : objectIds) {
-                    if (isMatch(objectId, entity.getEntity())) {
-                        return true;
-                    }
-                }
-
-                return false;
+            for (AtlasObjectId objectId : objectIds) {
+                return isMatch(objectId, entity.entity);
             }
+
+            return objectIds.size() == 0;
         }
 
-        @VisibleForTesting
-        void addObjectId(AtlasObjectId objId) {
-            this.objectIds.add(objId);
+        public void add(AtlasObjectId objectId) {
+            this.objectIds.add(objectId);
         }
 
         private boolean isMatch(AtlasObjectId objectId, AtlasEntity entity) {
+            boolean ret = true;
             if (!StringUtils.isEmpty(objectId.getGuid())) {
                 return Objects.equals(objectId.getGuid(), entity.getGuid());
             }
 
-            boolean ret = Objects.equals(objectId.getTypeName(), entity.getTypeName());
+            ret = Objects.equals(objectId.getTypeName(), entity.getTypeName());
+            if (!ret) {
+                return ret;
+            }
 
-            if (ret) {
-                for (Map.Entry<String, Object> entry : objectId.getUniqueAttributes().entrySet()) {
-                    ret = ret && Objects.equals(entity.getAttribute(entry.getKey()), entry.getValue());
-
-                    if (!ret) {
-                        break;
-                    }
+            for (Map.Entry<String, Object> entry : objectId.getUniqueAttributes().entrySet()) {
+                ret = ret && Objects.equals(entity.getAttribute(entry.getKey()), entry.getValue());
+                if (!ret) {
+                    break;
                 }
             }
 
             return ret;
         }
+
+        @Override
+        public void setContext(TransformerContext transformerContext) {
+            this.transformerContext = transformerContext;
+            if(StringUtils.isEmpty(scope) || scope.equals(CONDITION_ENTITY_ALL)) {
+                return;
+            }
+
+            addObjectIdsFromExportRequest();
+        }
+
+        private void addObjectIdsFromExportRequest() {
+            for(AtlasObjectId objectId : this.transformerContext.getExportRequest().getItemsToExport()) {
+                add(objectId);
+            }
+        }
     }
 
 
     public static class HasValueCondition extends Condition {
-        public HasValueCondition(EntityAttribute attribute) {
-            super(attribute);
+        protected final String attributeValue;
+
+        public HasValueCondition(String attributeName, String attributeValue) {
+            super(attributeName);
+
+            this.attributeValue = attributeValue;
         }
 
         @Override
         public boolean matches(AtlasTransformableEntity entity) {
-            Object attributeValue = entity != null ? entity.getAttribute(attribute) : null;
+            Object attributeValue = entity != null ? entity.getAttribute(attributeName) : null;
 
             return attributeValue != null ? StringUtils.isNotEmpty(attributeValue.toString()) : false;
         }
