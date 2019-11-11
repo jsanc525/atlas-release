@@ -17,14 +17,9 @@
  */
 package org.apache.atlas.entitytransform;
 
-import org.apache.atlas.model.impexp.AtlasExportRequest;
 import org.apache.atlas.model.impexp.AttributeTransform;
 import org.apache.atlas.model.instance.AtlasEntity;
-import org.apache.atlas.store.AtlasTypeDefStore;
-import org.apache.atlas.type.AtlasType;
-import org.apache.atlas.type.AtlasTypeRegistry;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +33,6 @@ public class BaseEntityHandler {
 
     protected final List<AtlasEntityTransformer> transformers;
     protected final boolean                      hasCustomAttributeTransformer;
-    private TransformerContext                   transformerContext;
 
     public BaseEntityHandler(List<AtlasEntityTransformer> transformers) {
         this(transformers, null);
@@ -54,45 +48,26 @@ public class BaseEntityHandler {
     }
 
     public AtlasEntity transform(AtlasEntity entity) {
-        if (!CollectionUtils.isNotEmpty(transformers)) {
-            return entity;
-        }
+        if (CollectionUtils.isNotEmpty(transformers)) {
+            AtlasTransformableEntity transformableEntity = getTransformableEntity(entity);
 
-        AtlasTransformableEntity transformableEntity = getTransformableEntity(entity);
-        if (transformableEntity == null) {
-            return entity;
-        }
+            if (transformableEntity != null) {
+                for (AtlasEntityTransformer transformer : transformers) {
+                    transformer.transform(transformableEntity);
+                }
 
-        for (AtlasEntityTransformer transformer : transformers) {
-            transformer.transform(transformableEntity);
+                transformableEntity.transformComplete();
+            }
         }
-
-        transformableEntity.transformComplete();
 
         return entity;
-    }
-
-    private void setContextForActions(List<Action> actions) {
-        for(Action action : actions) {
-            if (action instanceof NeedsContext) {
-                ((NeedsContext) action).setContext(transformerContext);
-            }
-        }
-    }
-
-    private void setContextForConditions(List<Condition> conditions) {
-        for(Condition condition : conditions) {
-            if (condition instanceof NeedsContext) {
-                ((NeedsContext) condition).setContext(transformerContext);
-            }
-        }
     }
 
     public AtlasTransformableEntity getTransformableEntity(AtlasEntity entity) {
         return new AtlasTransformableEntity(entity);
     }
 
-    public static List<BaseEntityHandler> createEntityHandlers(List<AttributeTransform> transforms, TransformerContext context) {
+    public static List<BaseEntityHandler> createEntityHandlers(List<AttributeTransform> transforms) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("==> BaseEntityHandler.createEntityHandlers(transforms={})", transforms);
         }
@@ -117,15 +92,7 @@ public class BaseEntityHandler {
         for (BaseEntityHandler handler : handlers) {
             if (handler.hasCustomAttributeTransformer()) {
                 ret.add(handler);
-                handler.setContext(context);
             }
-        }
-
-        if (CollectionUtils.isEmpty(ret)) {
-            BaseEntityHandler be = new BaseEntityHandler(transformers);
-            be.setContext(context);
-
-            ret.add(be);
         }
 
         if (CollectionUtils.isEmpty(ret)) {
@@ -152,20 +119,7 @@ public class BaseEntityHandler {
 
         return false;
     }
-    public void setContext(AtlasTypeRegistry typeRegistry, AtlasTypeDefStore typeDefStore, AtlasExportRequest request) {
-        setContext(new TransformerContext(typeRegistry, typeDefStore, request));
-    }
 
-    public void setContext(TransformerContext context) {
-        this.transformerContext = context;
-
-        for (AtlasEntityTransformer transformer : transformers) {
-            if (transformerContext != null) {
-                setContextForActions(transformer.getActions());
-                setContextForConditions(transformer.getConditions());
-            }
-        }
-    }
 
     public static class AtlasTransformableEntity {
         protected final AtlasEntity entity;
@@ -215,42 +169,5 @@ public class BaseEntityHandler {
         public void transformComplete() {
             // implementations can override to set value of computed-attributes
         }
-    }
-
-    public static List<BaseEntityHandler> fromJson(String transformersString, TransformerContext context) {
-        if (StringUtils.isEmpty(transformersString)) {
-            return null;
-        }
-
-        Object transformersObj = AtlasType.fromJson(transformersString, Object.class);
-        List transformers = (transformersObj != null && transformersObj instanceof List) ? (List) transformersObj : null;
-
-        List<AttributeTransform> attributeTransforms = new ArrayList<>();
-
-        if (CollectionUtils.isEmpty(transformers)) {
-            return null;
-        }
-
-        for (Object transformer : transformers) {
-            String transformerStr = AtlasType.toJson(transformer);
-            AttributeTransform attributeTransform = AtlasType.fromJson(transformerStr, AttributeTransform.class);
-
-            if (attributeTransform == null) {
-                continue;
-            }
-
-            attributeTransforms.add(attributeTransform);
-        }
-
-        if (CollectionUtils.isEmpty(attributeTransforms)) {
-            return null;
-        }
-
-        List<BaseEntityHandler> entityHandlers = createEntityHandlers(attributeTransforms, context);
-        if (CollectionUtils.isEmpty(entityHandlers)) {
-            return null;
-        }
-
-        return entityHandlers;
     }
 }
