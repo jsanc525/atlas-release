@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import static org.apache.atlas.repository.impexp.ZipFileResourceTestUtils.getZipSource;
@@ -53,8 +52,7 @@ public class ZipSourceTest {
     }
 
     @DataProvider(name = "sales")
-    public static Object[][] getDataFromQuickStart_v1_Sales(ITestContext context) throws IOException, AtlasBaseException
-    {
+    public static Object[][] getDataFromQuickStart_v1_Sales(ITestContext context) throws IOException {
         return getZipSource("sales-v1-full.zip");
     }
 
@@ -129,8 +127,7 @@ public class ZipSourceTest {
     }
 
     @Test(dataProvider = "sales")
-    public void iteratorSetPositionBehavor(InputStream inputStream) throws IOException, AtlasBaseException {
-        ZipSource zipSource = new ZipSource(inputStream);
+    public void iteratorSetPositionBehavor(ZipSource zipSource) throws IOException, AtlasBaseException {
         Assert.assertTrue(zipSource.hasNext());
 
         List<String> creationOrder = zipSource.getCreationOrder();

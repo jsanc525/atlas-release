@@ -374,7 +374,7 @@ public class TransformationHandlerTest {
     public void verifyAddClassificationUsingScope() {
         AtlasExportRequest exportRequest = new AtlasExportRequest();
 
-        exportRequest.setItemsToExport(Collections.singletonList(new AtlasObjectId("hive_db", Collections.<String, Object>singletonMap(ATTR_NAME_QUALIFIED_NAME, "hr@cl1"))));
+        exportRequest.setItemsToExport(Collections.singletonList(new AtlasObjectId("hive_db", Collections.singletonMap(ATTR_NAME_QUALIFIED_NAME, "hr@cl1"))));
 
         AtlasEntityTransformer transformer = new AtlasEntityTransformer(Collections.singletonMap("Referenceable.", "topLevel: "),
                                                                         Collections.singletonMap("Referenceable", "ADD_CLASSIFICATION: replicated"),

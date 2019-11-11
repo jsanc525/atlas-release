@@ -19,6 +19,7 @@
 package org.apache.atlas.web.resources;
 
 import com.sun.jersey.multipart.FormDataParam;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasErrorCode;
@@ -35,6 +36,7 @@ import org.apache.atlas.model.metrics.AtlasMetrics;
 import org.apache.atlas.repository.impexp.ExportService;
 import org.apache.atlas.repository.impexp.ImportService;
 import org.apache.atlas.repository.impexp.ZipSink;
+import org.apache.atlas.repository.impexp.ZipSource;
 import org.apache.atlas.services.MetricsService;
 import org.apache.atlas.type.AtlasType;
 import org.apache.atlas.util.SearchTracker;
@@ -370,8 +372,9 @@ public class AdminResource {
 
         try {
             AtlasImportRequest request = AtlasType.fromJson(jsonData, AtlasImportRequest.class);
+            ZipSource zipSource = new ZipSource(inputStream);
 
-            result = importService.run(inputStream, request, Servlets.getUserName(httpServletRequest),
+            result = importService.run(zipSource, request, Servlets.getUserName(httpServletRequest),
                     Servlets.getHostName(httpServletRequest),
                     AtlasAuthorizationUtils.getRequestIpAddress(httpServletRequest));
         } catch (Exception excp) {
