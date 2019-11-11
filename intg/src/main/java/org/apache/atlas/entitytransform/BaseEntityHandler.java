@@ -95,10 +95,6 @@ public class BaseEntityHandler {
             }
         }
 
-        if (CollectionUtils.isEmpty(ret)) {
-            ret.add(new BaseEntityHandler(transformers));
-        }
-
         if (LOG.isDebugEnabled()) {
             LOG.debug("<== BaseEntityHandler.createEntityHandlers(transforms={}): ret.size={}", transforms, ret.size());
         }
@@ -160,10 +156,6 @@ public class BaseEntityHandler {
                     entity.setAttribute(attributeName, attributeValue);
                 }
             }
-        }
-
-        public boolean hasAttribute(String attributeName) {
-            return getAttribute(attributeName) != null;
         }
 
         public void transformComplete() {
