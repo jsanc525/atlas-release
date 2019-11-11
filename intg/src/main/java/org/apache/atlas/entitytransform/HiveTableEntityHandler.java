@@ -43,21 +43,18 @@ public class HiveTableEntityHandler extends BaseEntityHandler {
     }
 
     private static class HiveTableEntity extends AtlasTransformableEntity {
-        private final String qualifiedName;
-        private String       databaseName;
-        private String       tableName;
-        private String       clusterName;
-        private boolean      isCustomAttributeUpdated = false;
+        private String  databaseName;
+        private String  tableName;
+        private String  clusterName;
+        private boolean isCustomAttributeUpdated = false;
 
-        private final boolean tableNameFromQualifiedNameDifferent;
-        private final String  tableNameFromQualifiedName;
 
         public HiveTableEntity(AtlasEntity entity) {
             super(entity);
 
             this.tableName = (String) entity.getAttribute(NAME_ATTRIBUTE);
 
-            this.qualifiedName = (String) entity.getAttribute(QUALIFIED_NAME_ATTRIBUTE);
+            String qualifiedName = (String) entity.getAttribute(QUALIFIED_NAME_ATTRIBUTE);
 
             if (qualifiedName != null) {
                 int databaseSeparatorIdx = qualifiedName.indexOf(DATABASE_DELIMITER);
@@ -65,13 +62,9 @@ public class HiveTableEntityHandler extends BaseEntityHandler {
 
                 this.databaseName = databaseSeparatorIdx != -1 ? qualifiedName.substring(0, databaseSeparatorIdx) : "";
                 this.clusterName  = clusterSeparatorIdx != -1  ? qualifiedName.substring(clusterSeparatorIdx + 1) : "";
-                this.tableNameFromQualifiedName = clusterSeparatorIdx != -1 ? this.qualifiedName.substring(databaseSeparatorIdx + 1, clusterSeparatorIdx) : "";
-                this.tableNameFromQualifiedNameDifferent = !this.tableNameFromQualifiedName.equals(this.tableName);
             } else {
                 this.databaseName = "";
                 this.clusterName  = "";
-                this.tableNameFromQualifiedName = "";
-                this.tableNameFromQualifiedNameDifferent = false;
             }
         }
 
@@ -128,8 +121,6 @@ public class HiveTableEntityHandler extends BaseEntityHandler {
 
 
         private String toQualifiedName() {
-            String tableName = tableNameFromQualifiedNameDifferent ? this.tableNameFromQualifiedName : this.tableName;
-
             return String.format("%s.%s@%s", databaseName, tableName, clusterName);
         }
     }
