@@ -1,4 +1,20 @@
 --------------------
+HDP-3.1.5 Changes
+--------------------
+BUG-122365: UI, No 'Show historical entities' checkbox on empty result page after search.
+ATLAS-3515: Migration import now creates new types and then updates existing types.
+ATLAS-3504: DSL query with like clause returns unexpected results
+ATLAS-3389: UI: Tag attribute values are trimmed
+ATLAS-3506: Add Expect 100 Continue header to Atlas Client.
+ATLAS-3489: Import API: Deleted entity handling improvement.
+ATLAS-3451: Export API connected export mismatch for lineage of entities from different DBs
+ATLAS-3346: Support to re-activated deleted entity during import.
+ATLAS-3416: Import API: delete non-exported hive_table for table level replication
+ATLAS-3396: ZipSourceWithBackingDirectory: Implementation. Port to master. #1 & #2
+ATLAS-3406: mvn generate-resources does not use dashboardv2/package-lock.json
+ATLAS-3365: expose image file names to be loaded on lineage page
+ATLAS-3452: Update jackson.databind.version to 2.10.0
+--------------------
 HDP-3.1.4 Changes
 --------------------
 
