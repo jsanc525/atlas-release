@@ -54,7 +54,8 @@ public enum AtlasConfiguration {
     SEARCH_MAX_LIMIT("atlas.search.maxlimit", 10000),
     SEARCH_DEFAULT_LIMIT("atlas.search.defaultlimit", 100),
 
-    IMPORT_TEMP_DIRECTORY("atlas.import.temp.directory", "");
+    IMPORT_TEMP_DIRECTORY("atlas.import.temp.directory", ""),
+    LINEAGE_USING_GREMLIN("atlas.lineage.query.use.gremlin", false);
 
     private static final Configuration APPLICATION_PROPERTIES;
 
