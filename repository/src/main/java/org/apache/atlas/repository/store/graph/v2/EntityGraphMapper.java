@@ -1527,7 +1527,7 @@ public class EntityGraphMapper {
                 if (propagateTags) {
                     // compute propagatedEntityVertices only once
                     if (entitiesToPropagateTo == null) {
-                        entitiesToPropagateTo = graphHelper.getImpactedVertices(guid);
+                        entitiesToPropagateTo = entityRetriever.getImpactedVerticesV2(entityVertex);
                     }
 
                     if (CollectionUtils.isNotEmpty(entitiesToPropagateTo)) {
@@ -1797,7 +1797,7 @@ public class EntityGraphMapper {
             if (updatedTagPropagation != null && currentTagPropagation != updatedTagPropagation) {
                 if (updatedTagPropagation) {
                     if (CollectionUtils.isEmpty(entitiesToPropagateTo)) {
-                        entitiesToPropagateTo = graphHelper.getImpactedVerticesWithRestrictions(guid, classificationVertex.getIdForDisplay());
+                        entitiesToPropagateTo = entityRetriever.getImpactedVerticesV2(entityVertex, null, classificationVertex.getIdForDisplay());
                     }
 
                     if (CollectionUtils.isNotEmpty(entitiesToPropagateTo)) {
