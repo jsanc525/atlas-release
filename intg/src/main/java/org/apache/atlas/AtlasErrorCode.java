@@ -155,6 +155,7 @@ public enum AtlasErrorCode {
     PROPAGATED_CLASSIFICATION_REMOVAL_NOT_SUPPORTED(400, "ATLAS-400-00-87E", "Removal of classification {0}, which is propagated from entity {1}, is not supported"),
     IMPORT_ATTEMPTING_EMPTY_ZIP(400, "ATLAS-400-00-87F", "Attempting to import empty ZIP file."),
     PATCH_MISSING_RELATIONSHIP_LABEL(400, "ATLAS-400-00-880", "{0} - must include relationship label for type {1}"),
+    INVALID_PROPAGATION_TYPE(400, "ATLAS-400-00-9D", "Invalid propagation {0} for relationship-type={1}. Default value is {2}"),
 
     UNAUTHORIZED_ACCESS(403, "ATLAS-403-00-001", "{0} is not authorized to perform {1}"),
 
