@@ -24,6 +24,7 @@ import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasObjectId;
 import org.apache.atlas.model.typedef.AtlasEntityDef;
 import org.apache.atlas.model.typedef.AtlasEntityDef.AtlasRelationshipAttributeDef;
+import org.apache.atlas.model.typedef.AtlasRelationshipDef.PropagateTags;
 import org.apache.atlas.model.typedef.AtlasStructDef.AtlasAttributeDef;
 import org.apache.atlas.type.AtlasBuiltInTypes.AtlasObjectIdType;
 import org.apache.atlas.utils.AtlasEntityUtil;
@@ -73,7 +74,7 @@ public class AtlasEntityType extends AtlasStructType {
     private boolean                                  isInternalType             = false;
     private Map<String, AtlasAttribute>              headerAttributes           = Collections.emptyMap();
     private Map<String, AtlasAttribute>              minInfoAttributes          = Collections.emptyMap();
-
+    private Set<String>                              tagPropagationEdges        = Collections.emptySet();
 
     public AtlasEntityType(AtlasEntityDef entityDef) {
         super(entityDef);
@@ -123,6 +124,7 @@ public class AtlasEntityType extends AtlasStructType {
         this.allSubTypes            = new HashSet<>(); // this will be populated in resolveReferencesPhase2()
         this.typeAndAllSubTypes     = new HashSet<>(); // this will be populated in resolveReferencesPhase2()
         this.relationshipAttributes = new HashMap<>(); // this will be populated in resolveReferencesPhase3()
+        this.tagPropagationEdges    = new HashSet<>(); // this will be populated in resolveReferencesPhase2()
 
         this.typeAndAllSubTypes.add(this.getTypeName());
 
@@ -215,6 +217,8 @@ public class AtlasEntityType extends AtlasStructType {
                     }
                 }
             }
+
+            tagPropagationEdges.addAll(superType.tagPropagationEdges);
         }
 
         ownedRefAttributes = new ArrayList<>();
@@ -239,6 +243,7 @@ public class AtlasEntityType extends AtlasStructType {
         typeAndAllSubTypesQryStr   = ""; // will be computed on next access
         relationshipAttributes     = Collections.unmodifiableMap(relationshipAttributes);
         ownedRefAttributes         = Collections.unmodifiableList(ownedRefAttributes);
+        tagPropagationEdges        = Collections.unmodifiableSet(tagPropagationEdges);
 
         entityDef.setSubTypes(subTypes);
 
@@ -256,6 +261,7 @@ public class AtlasEntityType extends AtlasStructType {
         }
 
         entityDef.setRelationshipAttributeDefs(Collections.unmodifiableList(relationshipAttrDefs));
+        LOG.info("resolveReferencesPhase3({}): tagPropagationEdges={}", getTypeName(), tagPropagationEdges);
     }
 
     public Set<String> getSuperTypes() {
@@ -318,6 +324,13 @@ public class AtlasEntityType extends AtlasStructType {
         return ownedRefAttributes;
     }
 
+    public Set<String> getTagPropagationEdges() {
+        return this.tagPropagationEdges;
+    }
+
+    public String[] getTagPropagationEdgesArray() {
+        return CollectionUtils.isNotEmpty(tagPropagationEdges) ? tagPropagationEdges.toArray(new String[tagPropagationEdges.size()]) : null;
+    }
     public AtlasAttribute getRelationshipAttribute(String attributeName, String relationshipType) {
         final AtlasAttribute        ret;
         Map<String, AtlasAttribute> attributes = relationshipAttributes.get(attributeName);
@@ -346,6 +359,38 @@ public class AtlasEntityType extends AtlasStructType {
         }
 
         attributes.put(relationshipType.getTypeName(), attribute);
+
+        // determine if tags from this entity-type propagate via this relationship
+        PropagateTags propagation = relationshipType.getRelationshipDef().getPropagateTags();
+
+        if (propagation == null) {
+            propagation = PropagateTags.NONE;
+        }
+
+        final boolean propagatesTags;
+
+        switch (propagation) {
+            case BOTH:
+                propagatesTags = true;
+            break;
+
+            case ONE_TO_TWO:
+                propagatesTags = StringUtils.equals(relationshipType.getEnd1Type().getTypeName(), getTypeName());
+            break;
+
+            case TWO_TO_ONE:
+                propagatesTags = StringUtils.equals(relationshipType.getEnd2Type().getTypeName(), getTypeName());
+            break;
+
+            case NONE:
+            default:
+                propagatesTags = false;
+            break;
+        }
+
+        if (propagatesTags) {
+            tagPropagationEdges.add(relationshipType.getRelationshipLabel());
+        }
     }
 
     public Set<String> getAttributeRelationshipTypes(String attributeName) {
