@@ -175,6 +175,21 @@ define(['require',
                     icon.parent('button').attr("data-original-title", "Default View");
                 }
                 panel.toggleClass('fullscreen-mode');
+                this.slideBarToggle(panel);
+            },
+            slideBarToggle: function(panel) {
+                var sideBarCheck = $(".container-fluid.view-container").hasClass('slide-in'),
+                    sideBarContainer = $(".container-fluid.view-container"),
+                    sideBarWrapper = $("#sidebar-wrapper,#page-wrapper");
+
+                sideBarWrapper.addClass("animate-me");
+                panel.hasClass('fullscreen-mode') ?
+                    sideBarCheck ? null : sideBarContainer.toggleClass("slide-in") :
+                    sideBarCheck ? sideBarContainer.toggleClass("slide-in") : null;
+                $("#sidebar-wrapper,.search-browse-box,#page-wrapper").removeAttr("style");
+                setTimeout(function() {
+                    sideBarWrapper.removeClass("animate-me");
+                }, 301);
             },
             onCheckUnwantedEntity: function(e) {
                 var data = $.extend(true, {}, this.lineageData);
@@ -329,6 +344,7 @@ define(['require',
                             toolTipLabel: relationObj.displayText,
                             id: relationObj.guid,
                             isLineage: true,
+                            isIncomplete: relationObj.isIncomplete,
                             entityDef: this.getEntityDef(relationObj.typeName)
                         }, relationObj);
                         obj["serviceType"] = this.getServiceType({ typeName: relationObj.typeName, entityDef: obj.entityDef });
@@ -494,9 +510,11 @@ define(['require',
                     "translate(" + this.zoom.translate() + ")" +
                     "scale(" + this.zoom.scale() + ")"
                 );
-                LineageUtils.refreshGraphForIE({
-                    edgeEl: this.$('svg .edgePath')
-                });
+                if (platform.name === "IE") {
+                    LineageUtils.refreshGraphForIE({
+                        edgeEl: this.$('svg .edgePath')
+                    });
+                }
             },
             interpolateZoom: function(translate, scale, that, zoom) {
                 return d3.transition().duration(350).tween("zoom", function() {
@@ -559,6 +577,12 @@ define(['require',
                     if (currentNode) {
                         shapeSvg.attr("stroke", "#fb4200")
                     }
+                    if (node.isIncomplete === true) {
+                        parent.attr("class", "node isIncomplete show");
+                    } else {
+                        parent.attr("class", "node isIncomplete");
+                    }
+
                     parent.insert("defs")
                         .append("pattern")
                         .attr("x", "0%")
@@ -571,13 +595,7 @@ define(['require',
                         .attr("href", function(d) {
                             var that = this;
                             if (node) {
-                                // to check for IE-10
-                                var originLink = window.location.origin;
-                                if (platform.name === "IE") {
-                                    originLink = window.location.protocol + "//" + window.location.host;
-                                }
-                                var imageIconPath = Utils.getEntityIconPath({ entityData: node }),
-                                    imagePath = ((originLink + Utils.getBaseUrl(window.location.pathname)) + imageIconPath);
+                                var imageIconPath = Utils.getEntityIconPath({ entityData: node });
 
                                 shapeSvg.attr("data-iconpath", imageIconPath);
 
@@ -586,18 +604,18 @@ define(['require',
                                         ajaxOptions = {
                                             "url": imagePath,
                                             "method": "get",
-                                            "async": false,
+                                            "cache": true
                                         }
 
                                     if (platform.name !== "IE") {
                                         ajaxOptions["mimeType"] = "text/plain; charset=x-user-defined";
                                     }
+                                    shapeSvg.attr("data-iconpath", imagePath);
                                     $.ajax(ajaxOptions)
                                         .always(function(data, status, xhr) {
                                             if (data.status == 404) {
                                                 getImageData({
-                                                    "imagePath": Utils.getEntityIconPath({ entityData: node, errorUrl: imagePath }),
-                                                    "imageIconPath": imageIconPath
+                                                    "imagePath": Utils.getEntityIconPath({ entityData: node, errorUrl: imagePath })
                                                 });
                                             } else if (data) {
                                                 if (platform.name !== "IE") {
@@ -605,26 +623,16 @@ define(['require',
                                                 } else {
                                                     imageObject[imageIconPath] = imagePath;
                                                 }
+                                                d3.select(that).attr("xlink:href", imageObject[imageIconPath]);
+                                                if (imageIconPath !== shapeSvg.attr("data-iconpath")) {
+                                                    shapeSvg.attr("data-iconpathorigin", imageIconPath);
+                                                }
                                             }
                                         });
                                 }
-                                if (_.keys(imageObject).indexOf(imageIconPath) === -1) {
-                                    getImageData({
-                                        "imagePath": imagePath,
-                                        "imageIconPath": imageIconPath
-                                    });
-                                }
-
-                                if (_.isUndefined(imageObject[imageIconPath])) {
-                                    // before img success
-                                    imageObject[imageIconPath] = [d3.select(that)];
-                                } else if (_.isArray(imageObject[imageIconPath])) {
-                                    // before img success
-                                    imageObject[imageIconPath].push(d3.select(that));
-                                } else {
-                                    d3.select(that).attr("xlink:href", imageObject[imageIconPath]);
-                                    return imageObject[imageIconPath];
-                                }
+                                getImageData({
+                                    "imagePath": imageIconPath
+                                });
                             }
                         })
                         .attr("x", "4")
@@ -866,7 +874,7 @@ define(['require',
                         } else if (that.filterObj.isDeletedEntityHideCheck && nodeData && nodeData.isDeleted) {
                             return
                         }
-                        typeStr += '<option value="' + obj.guid + '">' + obj.attributes.name + '</option>';
+                        typeStr += '<option value="' + obj.guid + '">' + obj.displayText + '</option>';
                     });
                 }
                 this.ui.lineageTypeSearch.html(typeStr);
@@ -987,6 +995,7 @@ define(['require',
                     }
                     $('.hidden-svg').html(svgClone);
                     $(svgClone).find('>g').attr("transform", "scale(" + scaleFactor + ")");
+                    $(svgClone).find("foreignObject").remove();
                     var canvasOffset = { x: 150, y: 150 },
                         setWidth = (svgClone.getBBox().width + (canvasOffset.x)),
                         setHeight = (svgClone.getBBox().height + (canvasOffset.y)),
