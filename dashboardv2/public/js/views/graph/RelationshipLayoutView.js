@@ -50,7 +50,9 @@ define(['require',
                 relationshipDetailValue: "[data-id='relationshipDetailValue']",
                 zoomControl: "[data-id='zoomControl']",
                 boxClose: '[data-id="box-close"]',
-                noValueToggle: "[data-id='noValueToggle']"
+                noValueToggle: "[data-id='noValueToggle']",
+                relationshipDetails:".relationship-details",
+                noData:".no-data"
             },
 
             /** ui events hash */
@@ -115,7 +117,9 @@ define(['require',
                 this.createTable();
             },
             noRelationship: function() {
-                this.$('svg').html('<text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle">No relationship data found</text>');
+                this.ui.relationshipDetails.hide();
+                this.ui.noData.show();
+                //this.$('svg').html('<text x="50%" y="50%" alignment-baseline="middle" text-anchor="middle">No relationship data found</text>');
             },
             toggleInformationSlider: function(options) {
                 if (options.open && !this.$('.relationship-details').hasClass("open")) {
@@ -260,10 +264,10 @@ define(['require',
                     .links(data.links)
                     .size([width, height])
                     .linkDistance(200)
-                    .gravity(0.0)
+                    .gravity(0.5)
                     .friction(0.1)
                     .charge(function(d) {
-                        var charge = -500;
+                        var charge = -2000;
                         if (d.index === 0) charge = 100
                         return charge;
                     })
