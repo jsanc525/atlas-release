@@ -1525,6 +1525,11 @@ public class EntityGraphMapper {
                 // add the attributes for the trait instance
                 mapClassification(EntityOperation.CREATE, context, classification, entityType, entityVertex, classificationVertex);
                 updateModificationMetadata(entityVertex);
+                if(addedClassifications.get(classification) == null) {
+                    addedClassifications.put(classification, new HashSet<>());
+                }
+                //Add current Vertex to be notified
+                addedClassifications.get(classification).add(entityVertex);
 
                 if (propagateTags) {
                     // compute propagatedEntityVertices only once
@@ -1540,11 +1545,7 @@ public class EntityGraphMapper {
                         List<AtlasVertex> entitiesPropagatedTo = deleteDelegate.getHandler().addTagPropagation(classificationVertex, entitiesToPropagateTo);
 
                         if (CollectionUtils.isNotEmpty(entitiesPropagatedTo)) {
-                            if(addedClassifications.get(classification) == null) {
-                                addedClassifications.put(classification, new HashSet<>(entitiesPropagatedTo));
-                            } else {
-                                addedClassifications.get(classification).addAll(entitiesPropagatedTo);
-                            }
+                            addedClassifications.get(classification).addAll(entitiesPropagatedTo);
                         }
                     } else {
                         if (LOG.isDebugEnabled()) {
@@ -1571,7 +1572,7 @@ public class EntityGraphMapper {
                 Set<AtlasVertex>  vertices           = addedClassifications.get(classification);
                 List<AtlasEntity> propagatedEntities = updateClassificationText(classification, vertices);
 
-                entityChangeNotifier.onClassificationsAddedToEntities(propagatedEntities, classifications);
+                entityChangeNotifier.onClassificationsAddedToEntities(propagatedEntities, Collections.singletonList(classification));
             }
 
             RequestContext.get().endMetricRecord(metric);
