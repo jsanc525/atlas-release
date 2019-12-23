@@ -87,6 +87,7 @@ import static org.apache.atlas.glossary.GlossaryUtils.TERM_ASSIGNMENT_ATTR_EXPRE
 import static org.apache.atlas.glossary.GlossaryUtils.TERM_ASSIGNMENT_ATTR_SOURCE;
 import static org.apache.atlas.glossary.GlossaryUtils.TERM_ASSIGNMENT_ATTR_STATUS;
 import static org.apache.atlas.glossary.GlossaryUtils.TERM_ASSIGNMENT_ATTR_STEWARD;
+import static org.apache.atlas.model.instance.AtlasRelationship.Status.ACTIVE;
 import static org.apache.atlas.model.instance.AtlasRelationship.Status.DELETED;
 import static org.apache.atlas.model.typedef.AtlasBaseTypeDef.ATLAS_TYPE_BIGDECIMAL;
 import static org.apache.atlas.model.typedef.AtlasBaseTypeDef.ATLAS_TYPE_BIGINTEGER;
@@ -114,6 +115,7 @@ import static org.apache.atlas.repository.graph.GraphHelper.getBlockedClassifica
 import static org.apache.atlas.repository.graph.GraphHelper.getArrayElementsProperty;
 import static org.apache.atlas.repository.graph.GraphHelper.getClassificationEntityGuid;
 import static org.apache.atlas.repository.graph.GraphHelper.getClassificationEntityStatus;
+import static org.apache.atlas.repository.graph.GraphHelper.getEdgeStatus;
 import static org.apache.atlas.repository.graph.GraphHelper.getGuid;
 import static org.apache.atlas.repository.graph.GraphHelper.getIncomingEdgesByLabel;
 import static org.apache.atlas.repository.graph.GraphHelper.getPrimitiveMap;
@@ -502,6 +504,10 @@ public class EntityGraphRetriever {
             Iterable<AtlasEdge> propagationEdges = entityVertex.getEdges(AtlasEdgeDirection.BOTH, tagPropagationEdges);
 
             for (AtlasEdge propagationEdge : propagationEdges) {
+                if (getEdgeStatus(propagationEdge) != ACTIVE) {
+                    continue;
+                }
+
                 PropagateTags tagPropagation = getPropagateTags(propagationEdge);
 
                 if (tagPropagation == null || tagPropagation == NONE) {
