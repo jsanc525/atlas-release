@@ -422,3 +422,4 @@ BUG-90089: Remove falcon hook from atlas
 BUG-89993: Remove shading of hbase-server and hbase-client libraries
 BUG-89991: Update atlas to use the latest component release versions
 ATLAS-3565: Atlas server should set startTime and endTime for hive_process to System.currentTimeMillis() if either of these are null.
+ATLAS-3586: Hive hook should set startTime and endTime for hive_process entities to System.currentTimeMillis()
