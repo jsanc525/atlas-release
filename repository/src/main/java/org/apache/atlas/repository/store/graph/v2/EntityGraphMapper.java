@@ -112,6 +112,8 @@ public class EntityGraphMapper {
     private static final String SOFT_REF_FORMAT      = "%s:%s";
     private static final int INDEXED_STR_SAFE_LEN = AtlasConfiguration.GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH.getInt();
 
+    private static final boolean ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES = AtlasConfiguration.ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES.getBoolean();
+
     private final GraphHelper               graphHelper = GraphHelper.getInstance();
     private final AtlasGraph                graph;
     private final DeleteHandlerDelegate     deleteDelegate;
@@ -1807,6 +1809,48 @@ public class EntityGraphMapper {
         return entity;
     }
 
+    public void updateClassificationTextAndNames(AtlasVertex vertex) throws AtlasBaseException {
+        if(CollectionUtils.isEmpty(vertex.getPropertyValues(TRAIT_NAMES_PROPERTY_KEY, String.class)) &&
+                CollectionUtils.isEmpty(vertex.getPropertyValues(PROPAGATED_TRAIT_NAMES_PROPERTY_KEY, String.class))) {
+            return;
+        }
+
+        String guid = GraphHelper.getGuid(vertex);
+        AtlasEntity entity = instanceConverter.getAndCacheEntity(guid, ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
+        List<String> classificationNames = new ArrayList<>();
+        List<String> propagatedClassificationNames = new ArrayList<>();
+
+        for (AtlasClassification classification : entity.getClassifications()) {
+            if (isPropagatedClassification(classification, guid)) {
+                propagatedClassificationNames.add(classification.getTypeName());
+            } else {
+                classificationNames.add(classification.getTypeName());
+            }
+        }
+
+        vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
+    }
+
+    private boolean isPropagatedClassification(AtlasClassification classification, String guid) {
+        String classificationEntityGuid = classification.getEntityGuid();
+
+        return StringUtils.isNotEmpty(classificationEntityGuid) && !StringUtils.equals(classificationEntityGuid, guid);
+    }
+
+    private void addToClassificationNames(AtlasVertex entityVertex, String classificationName) {
+        AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, classificationName);
+    }
+
+    private void setClassificationNames(AtlasVertex entityVertex, List<String> traitNames) {
+        if (entityVertex != null) {
+            entityVertex.removeProperty(TRAIT_NAMES_PROPERTY_KEY);
+
+            for (String traitName : traitNames) {
+                AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, traitName);
+            }
+        }
+    }
+
     public void updateClassifications(EntityMutationContext context, String guid, List<AtlasClassification> classifications) throws AtlasBaseException {
         if (CollectionUtils.isEmpty(classifications)) {
             throw new AtlasBaseException(AtlasErrorCode.INVALID_CLASSIFICATION_PARAMS, "update", guid);
@@ -1965,7 +2009,7 @@ public class EntityGraphMapper {
 
         for (AtlasVertex vertex : notificationVertices) {
             String      entityGuid = GraphHelper.getGuid(vertex);
-            AtlasEntity entity     = instanceConverter.getAndCacheEntity(entityGuid);
+            AtlasEntity entity     = instanceConverter.getAndCacheEntity(entityGuid, ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
             if (isActive(entity)) {
                 vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
@@ -2177,7 +2221,7 @@ public class EntityGraphMapper {
 
         if(CollectionUtils.isNotEmpty(propagatedVertices)) {
             for(AtlasVertex vertex : propagatedVertices) {
-                AtlasEntity entity = instanceConverter.getAndCacheEntity(GraphHelper.getGuid(vertex));
+                AtlasEntity entity = instanceConverter.getAndCacheEntity(GraphHelper.getGuid(vertex), ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
                 if (isActive(entity)) {
                     vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
