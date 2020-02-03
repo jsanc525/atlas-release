@@ -113,6 +113,8 @@ public class EntityGraphMapper {
     private static final int INDEXED_STR_SAFE_LEN             = AtlasConfiguration.GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH.getInt();
     private static final String CLASSIFICATION_NAME_DELIMITER = "|";
 
+    private static final boolean ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES = AtlasConfiguration.ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES.getBoolean();
+
     private final GraphHelper               graphHelper = GraphHelper.getInstance();
     private final AtlasGraph                graph;
     private final DeleteHandlerDelegate     deleteDelegate;
@@ -1684,7 +1686,7 @@ public class EntityGraphMapper {
 
     private AtlasEntity updateClassificationText(AtlasVertex vertex) throws AtlasBaseException {
         String guid        = GraphHelper.getGuid(vertex);
-        AtlasEntity entity = instanceConverter.getAndCacheEntity(guid);
+        AtlasEntity entity = instanceConverter.getAndCacheEntity(guid, ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
         vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
         return entity;
@@ -1692,10 +1694,9 @@ public class EntityGraphMapper {
 
     public void updateClassificationTextAndNames(AtlasVertex vertex) throws AtlasBaseException {
         String        guid         = GraphHelper.getGuid(vertex);
-        AtlasEntity   entity       = instanceConverter.getAndCacheEntity(guid);
+        AtlasEntity   entity       = instanceConverter.getAndCacheEntity(guid, ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
         if (CollectionUtils.isEmpty(entity.getClassifications())) return;
-
         List<String> classificationNames           = new ArrayList<>();
         List<String> propagatedClassificationNames = new ArrayList<>();
 
@@ -1901,7 +1902,7 @@ public class EntityGraphMapper {
 
         for (AtlasVertex vertex : notificationVertices) {
             String      entityGuid = GraphHelper.getGuid(vertex);
-            AtlasEntity entity     = instanceConverter.getAndCacheEntity(entityGuid);
+            AtlasEntity entity     = instanceConverter.getAndCacheEntity(entityGuid, ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
             if (isActive(entity)) {
                 vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
@@ -2101,7 +2102,7 @@ public class EntityGraphMapper {
 
         if(CollectionUtils.isNotEmpty(propagatedVertices)) {
             for(AtlasVertex vertex : propagatedVertices) {
-                AtlasEntity entity = instanceConverter.getAndCacheEntity(GraphHelper.getGuid(vertex));
+                AtlasEntity entity = instanceConverter.getAndCacheEntity(GraphHelper.getGuid(vertex), ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES);
 
                 if (isActive(entity)) {
                     vertex.setProperty(CLASSIFICATION_TEXT_KEY, fullTextMapperV2.getClassificationTextForEntity(entity));
