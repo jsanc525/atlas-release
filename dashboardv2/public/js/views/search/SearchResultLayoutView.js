@@ -571,11 +571,18 @@ define(['require',
                     that.renderBreadcrumb();
                     table.trigger("grid:refresh"); /*Event fire when table rendered*/
                     if (that.isDisable !== true) {
-                        tableDragger(document.querySelector(".colSort")).on('drop', function(from, to, el) {
-                            that.columnOrder = that.getColumnOrder(el.querySelectorAll('th.renderable'));
-                            table.trigger("grid:refresh:update");
-                            that.triggerUrl();
-                        });
+                        if (tableDragger) {
+                            if (typeof tableDragger !== "function" && typeof tableDragger.default === "function") {
+                                tableDragger = tableDragger.default;
+                            }
+                            if (typeof tableDragger === "function") {
+                                tableDragger(document.querySelector(".colSort")).on('drop', function(from, to, el) {
+                                    that.columnOrder = that.getColumnOrder(el.querySelectorAll('th.renderable'));
+                                    table.trigger("grid:refresh:update");
+                                    that.triggerUrl();
+                                });
+                            }
+                        }
                     }
                     that.checkTableFetch();
                 });
