@@ -51,6 +51,7 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String                    guid                = null;
+    private Boolean                   isIncomplete        = Boolean.FALSE;
     private AtlasEntity.Status        status              = AtlasEntity.Status.ACTIVE;
     private String                    displayText         = null;
     private List<String>              classificationNames = null;
@@ -89,6 +90,7 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
 
         if (other != null) {
             setGuid(other.getGuid());
+            setIsIncomplete(other.getIsIncomplete());
             setStatus(other.getStatus());
             setDisplayText(other.getDisplayText());
             setClassificationNames(other.getClassificationNames());
@@ -102,6 +104,12 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
 
     public void setGuid(String guid) {
         this.guid = guid;
+    }
+
+    public Boolean getIsIncomplete() { return isIncomplete; }
+
+    public void setIsIncomplete(Boolean isIncomplete) {
+        this.isIncomplete = isIncomplete;
     }
 
     public AtlasEntity.Status getStatus() {
@@ -140,6 +148,7 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
 
         sb.append("AtlasEntityHeader{");
         sb.append("guid='").append(guid).append('\'');
+        sb.append(", isIncomplete=").append(isIncomplete);
         sb.append(", status=").append(status);
         sb.append(", displayText=").append(displayText);
         sb.append(", classificationNames=[");
@@ -161,6 +170,7 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
         if (!super.equals(o)) return false;
         AtlasEntityHeader that = (AtlasEntityHeader) o;
         return Objects.equals(guid, that.guid) &&
+                Objects.equals(isIncomplete, that.isIncomplete) &&
                 status == that.status &&
                 Objects.equals(displayText, that.displayText) &&
                 Objects.equals(classificationNames, that.classificationNames) &&
@@ -169,7 +179,7 @@ public class AtlasEntityHeader extends AtlasStruct implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), guid, status, displayText, classificationNames, classifications);
+        return Objects.hash(super.hashCode(), guid, isIncomplete, status, displayText, classificationNames, classifications);
     }
 
     @Override
