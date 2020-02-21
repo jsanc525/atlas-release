@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
+import static org.apache.atlas.AtlasConfiguration.REST_API_CREATE_SHELL_ENTITY_FOR_NON_EXISTING_REF;
+
 /**
  * This records audit information as part of the filter after processing the request
  * and also introduces a UUID into request and response for tracing requests in logs.
@@ -53,9 +55,16 @@ public class AuditFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFilter.class);
     private static final Logger METRICS_LOG = LoggerFactory.getLogger("METRICS");
 
+    private boolean deleteTypeOverrideEnabled                = false;
+    private boolean createShellEntityForNonExistingReference = false;
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         LOG.info("AuditFilter initialization started");
+
+        createShellEntityForNonExistingReference = REST_API_CREATE_SHELL_ENTITY_FOR_NON_EXISTING_REF.getBoolean();
+
+        LOG.info("REST_API_ENABLE_DELETE_TYPE_OVERRIDE={}", deleteTypeOverrideEnabled);
     }
 
     @Override
@@ -72,6 +81,12 @@ public class AuditFilter implements Filter {
             currentThread.setName(formatName(oldName, requestId));
             RequestContext requestContext = RequestContext.createContext();
             requestContext.setUser(user);
+
+            RequestContextV1.clear();
+            RequestContextV1 requestContextV1 = RequestContextV1.get();
+            requestContextV1.setUser(user);
+            requestContextV1.setCreateShellEntityForNonExistingReference(createShellEntityForNonExistingReference);
+
             recordAudit(httpRequest, requestTimeISO9601, user);
             filterChain.doFilter(request, response);
         } finally {

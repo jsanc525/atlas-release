@@ -46,7 +46,7 @@ public class RequestContextV1 {
     private       List<EntityGuidPair>       entityGuidInRequest = null;
 
     private String user;
-
+    private boolean    createShellEntityForNonExistingReference = false;
 
     private RequestContextV1() {
     }
@@ -112,6 +112,14 @@ public class RequestContextV1 {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public boolean isCreateShellEntityForNonExistingReference() {
+        return createShellEntityForNonExistingReference;
+    }
+
+    public void setCreateShellEntityForNonExistingReference(boolean createShellEntityForNonExistingReference) {
+        this.createShellEntityForNonExistingReference = createShellEntityForNonExistingReference;
     }
 
     public void recordEntityUpdate(AtlasObjectId entity) {
