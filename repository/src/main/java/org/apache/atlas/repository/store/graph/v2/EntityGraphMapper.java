@@ -113,6 +113,7 @@ public class EntityGraphMapper {
     private static final int INDEXED_STR_SAFE_LEN = AtlasConfiguration.GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH.getInt();
 
     private static final boolean ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES = AtlasConfiguration.ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES.getBoolean();
+    private static final boolean CLASSIFICATION_PROPAGATION_DEFAULT                  = AtlasConfiguration.CLASSIFICATION_PROPAGATION_DEFAULT.getBoolean();
 
     private final GraphHelper               graphHelper = GraphHelper.getInstance();
     private final AtlasGraph                graph;
@@ -1602,10 +1603,11 @@ public class EntityGraphMapper {
 
                     if(reqContext.isImportInProgress() || reqContext.isInNotificationProcessing()) {
                         propagateTags = false;
-                        classification.setPropagate(propagateTags);
                     } else {
-                        propagateTags = true;
+                        propagateTags = CLASSIFICATION_PROPAGATION_DEFAULT;
                     }
+
+                    classification.setPropagate(propagateTags);
                 }
 
                 if (removePropagations == null) {
