@@ -261,7 +261,10 @@ public class AtlasEntityType extends AtlasStructType {
         }
 
         entityDef.setRelationshipAttributeDefs(Collections.unmodifiableList(relationshipAttrDefs));
-        LOG.info("resolveReferencesPhase3({}): tagPropagationEdges={}", getTypeName(), tagPropagationEdges);
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("resolveReferencesPhase3({}): tagPropagationEdges={}", getTypeName(), tagPropagationEdges);
+        }
     }
 
     public Set<String> getSuperTypes() {
