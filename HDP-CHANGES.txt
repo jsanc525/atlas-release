@@ -353,3 +353,4 @@ ATLAS-2276: update Hive hook to add an option to retain case-sensitivity of path
 ATLAS-2442:- Fix for read-only permission to allow read entity when http method is POST
 HOTFIX-1862 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
 ATLAS-2310:- Fix URL encoding incase of HA in passive node which caused wrong redirection url. (bpgergo via nixonrodrigues).
+HOTFIX-3073 RELENG-7419 lock npm grunt 1.0.4 to fix compile failure
