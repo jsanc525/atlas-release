@@ -34,9 +34,7 @@
          Some dependencies, like slf4j are excluded from the jar because they are included in Atlas -->
 
     <properties>
-        <tinkerpop.version>3.3.3</tinkerpop.version>
         <checkstyle.failOnViolation>false</checkstyle.failOnViolation>
-        <lucene-solr.version>7.3.0</lucene-solr.version>
     </properties>
 
     <dependencies>
@@ -201,6 +199,12 @@
             <artifactId>atlas-graphdb-common</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+	<dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
             <scope>test</scope>
         </dependency>
 
