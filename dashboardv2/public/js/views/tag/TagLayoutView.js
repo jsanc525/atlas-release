@@ -373,7 +373,7 @@ define(['require',
                         });
                     });
                     modal.on('ok', function() {
-                        modal.$el.find('button.ok').attr("disabled", "true");
+                        modal.$el.find('button.ok').showButtonLoader();
                         that.onCreateButton(view, modal);
                     });
                     modal.on('closeModal', function() {
@@ -401,6 +401,7 @@ define(['require',
                     Utils.notifyInfo({
                         content: "Please fill the attributes or delete the input box"
                     });
+                    modal.$el.find('button.ok').hideButtonLoader();
                     return;
                 }
 
@@ -459,6 +460,7 @@ define(['require',
                         }
                         notifyObj['text'] = text;
                         Utils.notifyConfirm(notifyObj);
+                        modal.$el.find('button.ok').hideButtonLoader();
                         return false;
                     }
                 }
@@ -497,6 +499,9 @@ define(['require',
                         });
                         modal.trigger('cancel');
                         that.typeHeaders.fetch({ reset: true });
+                    },
+                    complete: function() {
+                        modal.$el.find("button.ok").hideButtonLoader();
                     }
                 });
             },

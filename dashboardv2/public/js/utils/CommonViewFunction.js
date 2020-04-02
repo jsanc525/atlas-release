@@ -24,18 +24,25 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
         require(['models/VTag'], function(VTag) {
             if (options && options.guid && options.tagName) {
                 var tagModel = new VTag(),
+                    noticeRef = null,
                     notifyObj = {
                         modal: true,
+                        okCloses: false,
+                        okShowLoader: true,
                         text: options.msg,
                         title: options.titleMessage,
                         okText: options.okText,
-                        ok: function(argument) {
+                        ok: function(notice) {
+                            noticeRef = notice;
                             if (options.showLoader) {
                                 options.showLoader();
                             }
                             tagModel.deleteAssociation(options.guid, options.tagName, options.associatedGuid, {
                                 skipDefaultError: true,
                                 success: function(data) {
+                                    if (noticeRef) {
+                                        noticeRef.remove();
+                                    }
                                     Utils.notifySuccess({
                                         content: "Classification " + options.tagName + Messages.removeSuccessMessage
                                     });
@@ -58,6 +65,9 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                                     Utils.notifyError({
                                         content: message
                                     });
+                                    if (noticeRef) {
+                                        noticeRef.hideButtonLoader();
+                                    }
                                 }
                             });
                         },
@@ -680,7 +690,7 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                 }
             });
             modal.on('ok', function() {
-                modal.$el.find('button.ok').attr("disabled", true);
+                modal.$el.find('button.ok').showButtonLoader();
                 CommonViewFunction.createEditGlossaryCategoryTermSubmit(_.extend({ "ref": view, "modal": modal }, options));
             });
             modal.on('closeModal', function() {
@@ -725,7 +735,7 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                 modal.trigger('closeModal');
             },
             cust_error: function() {
-                modal.$el.find('button.ok').attr("disabled", false);
+                modal.$el.find('button.ok').hideButtonLoader();
             }
         }
         if (model) {
@@ -772,8 +782,12 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                 collection = options.collection,
                 model = options.model,
                 newModel = new options.collection.model(),
+                noticeRef = null,
                 ajaxOptions = {
                     success: function(rModel, response) {
+                        if (noticeRef) {
+                            noticeRef.remove();
+                        }
                         Utils.notifySuccess({
                             content: ((isCategoryView || isEntityView ? "Term" : "Category") + " association is removed successfully")
                         });
@@ -782,6 +796,9 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                         }
                     },
                     cust_error: function() {
+                        if (noticeRef) {
+                            noticeRef.hideButtonLoader();
+                        }
                         if (options.hideLoader) {
                             options.hideLoader();
                         }
@@ -789,10 +806,13 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                 },
                 notifyObj = {
                     modal: true,
+                    okCloses: false,
+                    okShowLoader: true,
                     text: options.msg,
                     title: options.titleMessage,
                     okText: options.buttonText,
-                    ok: function(argument) {
+                    ok: function(notice) {
+                        noticeRef = notice;
                         if (options.showLoader) {
                             options.showLoader();
                         }
@@ -815,7 +835,7 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages', 'utils/Enum
                             }));
                         }
                     },
-                    cancel: function(argument) {}
+                    cancel: function() {}
                 };
             Utils.notifyConfirm(notifyObj);
         }
