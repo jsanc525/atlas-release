@@ -651,7 +651,7 @@
         <node-for-v2.version>v8.9.0</node-for-v2.version>
         <npm-for-v2.version>5.5.1</npm-for-v2.version>
         <slf4j.version>1.7.21</slf4j.version>
-        <jetty.version>9.3.14.v20161028</jetty.version>
+        <jetty.version>9.4.26.v20200117</jetty.version>
         <jetty.jsp.version>9.2.12.v20150709</jetty.jsp.version>
         <jersey.version>1.19</jersey.version>
         <hadoop.version>3.0.0.3.0.0.0-SNAPSHOT</hadoop.version>
@@ -1204,6 +1204,13 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
+                <version>${jetty.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
                 <version>${jetty.version}</version>
                 <scope>compile</scope>
             </dependency>

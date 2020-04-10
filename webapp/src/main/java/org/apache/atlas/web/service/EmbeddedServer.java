@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,8 +53,8 @@ public class EmbeddedServer {
         int minThreads = AtlasConfiguration.WEBSERVER_MIN_THREADS.getInt();
         int maxThreads = AtlasConfiguration.WEBSERVER_MAX_THREADS.getInt();
         long keepAliveTime = AtlasConfiguration.WEBSERVER_KEEPALIVE_SECONDS.getLong();
-        ExecutorThreadPool pool =
-                new ExecutorThreadPool(minThreads, maxThreads, keepAliveTime, TimeUnit.SECONDS, queue);
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(minThreads, maxThreads, keepAliveTime, TimeUnit.SECONDS, queue);
+        ExecutorThreadPool pool = new ExecutorThreadPool(threadPoolExecutor);
         server = new Server(pool);
 
         Connector connector = getConnector(host, port);
