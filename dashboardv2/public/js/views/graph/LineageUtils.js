@@ -419,17 +419,23 @@ define(['require', 'utils/Utils'], function(require, Utils) {
     }
     LineageUtils.BezierCurve = function(context) {
         return {
-            lineStart() {
+            lineStart: function() {
                 this.data = [];
             },
-            point(x, y) {
+            point: function(x, y) {
                 this.data.push([x, y]);
             },
-            lineEnd() {
-                var [x0, y0] = this.data[0],
-                    [cp1x, cp1y] = this.data[1],
-                    [cp2x, cp2y] = this.data[this.data.length - 2],
-                    [x1, y1] = this.data[this.data.length - 1];
+            lineEnd: function() {
+                var x0 = this.data[0][0],
+                    y0 = this.data[0][1],
+                    cp1x = this.data[1][0],
+                    cp1y = this.data[1][1],
+                    cp2Obj = this.data[this.data.length - 2],
+                    cp2x = cp2Obj[0],
+                    cp2y = cp2Obj[1],
+                    axisObj = this.data[this.data.length - 1],
+                    x1 = axisObj[0],
+                    y1 = axisObj[1];
                 context.moveTo(x0, y0);
                 context.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x1, y1);
             }
