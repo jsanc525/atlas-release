@@ -109,7 +109,7 @@ public class FullTextMapperV2 {
 
     public String getIndexTextForEntity(String guid) throws AtlasBaseException {
         String      ret    = null;
-        AtlasEntity entity = getAndCacheEntity(guid);
+        AtlasEntity entity = getAndCacheEntity(guid, false);
 
         if (entity != null) {
             StringBuilder sb = new StringBuilder();
