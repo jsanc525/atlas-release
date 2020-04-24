@@ -70,8 +70,7 @@ define(['require',
                 showPage: "[data-id='showPage']",
                 gotoPage: "[data-id='gotoPage']",
                 gotoPagebtn: "[data-id='gotoPagebtn']",
-                activePage: "[data-id='activePage']",
-                rowData: ".row"
+                activePage: "[data-id='activePage']"
             },
             templateHelpers: function() {
                 return {
@@ -185,6 +184,7 @@ define(['require',
             },
             bindEvents: function() {
                 var that = this;
+                this.onClickLoadMore();
                 this.listenTo(this.searchCollection, 'backgrid:selected', function(model, checked) {
                     this.arr = [];
                     if (checked === true) {
@@ -263,7 +263,7 @@ define(['require',
                             saveState: false
                         },
                         visibilityControlOpts: {
-                            buttonTemplate: _.template("<button class='btn btn-action btn-sm pull-right'>Columns&nbsp<i class='fa fa-caret-down'></i></button>")
+                            buttonTemplate: _.template("<button class='btn btn-action btn-sm pull-right'>Attributes&nbsp<i class='fa fa-caret-down'></i></button>")
                         },
                         el: this.ui.colManager
                     },
@@ -473,6 +473,9 @@ define(['require',
                         that.ui.activePage.attr('title', "Page " + that.activePage);
                         that.ui.activePage.text(that.activePage);
                         that.renderTableLayoutView();
+                        if (dataLength > 0) {
+                            that.$('.searchTable').removeClass('noData')
+                        }
 
                         if (Utils.getUrlState.isSearchTab() && value && !value.profileDBView) {
                             var searchString = 'Results for: <span class="filterQuery">' + CommonViewFunction.generateQueryOfFilter(that.value) + "</span>";
@@ -563,8 +566,7 @@ define(['require',
                     columns: columns
                 }));
                 if (table.collection.length === 0) {
-                    this.hideIrreleventElements();
-                    return;
+                    that.$(".searchTable").addClass('noData');
                 }
                 if (!that.REntityTableLayoutView) {
                     return;
@@ -575,7 +577,7 @@ define(['require',
                 } else {
                     that.ui.containerCheckBox.hide();
                 }
-                that.$(".ellipsis .inputAssignTag").hide();
+                that.$(".ellipsis-with-margin .inputAssignTag").hide();
                 table.trigger("grid:refresh"); /*Event fire when table rendered*/
                 // that.REntityTableLayoutView.$el.find('.colSort thead tr th:not(:first)').addClass('dragHandler');
                 if (that.isTableDropDisable !== true) {
@@ -586,7 +588,7 @@ define(['require',
                         that.tableRender({ "order": that.columnOrder, "table": TableLayout });
                         that.checkTableFetch();
                     }
-                    that.REntityTableLayoutView.$el.find('.colSort thead tr th:not(:first)').addClass('dragHandler');
+                    that.REntityTableLayoutView.$el.find('.colSort thead tr th:not(.select-all-header-cell)').addClass('dragHandler');
                     tableDragger(document.querySelector(".colSort"), { dragHandler: ".dragHandler" }).on('drop', tableDropFunction);
                 }
             },
@@ -761,7 +763,8 @@ define(['require',
                             var attrObj = Utils.getNestedSuperTypeObj({ data: def.toJSON(), collection: this.entityDefCollection, attrMerge: true });
                             _.each(attrObj, function(obj, key) {
                                 var key = obj.name,
-                                    isRenderable = _.contains(columnToShow, key)
+                                    isRenderable = _.contains(columnToShow, key),
+                                    isSortable = obj.typeName.search(/(array|map)/i) == -1;
                                 if (key == "name" || key == "description" || key == "owner") {
                                     if (columnToShow) {
                                         col[key].renderable = isRenderable;
@@ -774,6 +777,7 @@ define(['require',
                                     editable: false,
                                     resizeable: true,
                                     orderable: true,
+                                    sortable: isSortable,
                                     renderable: isRenderable,
                                     formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
                                         fromRaw: function(rawValue, model) {
@@ -786,7 +790,15 @@ define(['require',
                                                     'isTable': false
                                                 };
                                                 tempObj.valueObject[key] = modelObj.attributes[key];
-                                                return CommonViewFunction.propertyTable(tempObj);
+                                                var tablecolumn = CommonViewFunction.propertyTable(tempObj);
+                                                if (_.isArray(modelObj.attributes[key])) {
+                                                    var column = $("<div>" + tablecolumn + "</div>")
+                                                    if (tempObj.valueObject[key].length > 2) {
+                                                        column.addClass("toggleList semi-collapsed").append("<span><a data-id='load-more-columns'>Show More</a></span>");
+                                                    }
+                                                    return column;
+                                                }
+                                                return tablecolumn;
                                             }
                                         }
                                     })
@@ -797,9 +809,23 @@ define(['require',
                 }
                 return this.searchCollection.constructor.getTableCols(col, this.searchCollection);
             },
-            hideIrreleventElements: function() {
-                this.ui.rowData.siblings('.well').hide();
-                this.ui.rowData.siblings('.no-data').show();
+            onClickLoadMore: function() {
+                var that = this;
+                this.$el.on('click', "[data-id='load-more-columns']", function(event) {
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    var $this = $(this),
+                        $toggleList = $(this).parents('.toggleList');
+                    if ($toggleList.length) {
+                        if ($toggleList.hasClass('semi-collapsed')) {
+                            $toggleList.removeClass('semi-collapsed');
+                            $this.text("Show Less");
+                        } else {
+                            $toggleList.addClass('semi-collapsed');
+                            $this.text("Show More");
+                        }
+                    }
+                });
             },
             getDaynamicColumns: function(valueObj) {
                 var that = this,
@@ -956,7 +982,7 @@ define(['require',
             },
             hideLoader: function(options) {
                 this.$('.fontLoader:not(.for-ignore)').removeClass('show');
-                options && options.type === 'error' ? this.$('.ellipsis,.pagination-box').hide() : this.$('.ellipsis,.pagination-box').show(); // only show for first time and hide when type is error
+                options && options.type === 'error' ? this.$('.ellipsis-with-margin,.pagination-box').hide() : this.$('.ellipsis-with-margin,.pagination-box').show(); // only show for first time and hide when type is error
                 this.$('.tableOverlay').removeClass('show');
             },
             checkedValue: function(e) {
@@ -995,7 +1021,7 @@ define(['require',
                     tagName: tagName,
                     guid: guid,
                     associatedGuid: guid != entityGuid ? entityGuid : null,
-                    msg: "<div class='ellipsis'>Remove: " + "<b>" + _.escape(tagName) + "</b> assignment from" + " " + "<b>" + assetName + " ?</b></div>",
+                    msg: "<div class='ellipsis-with-margin'>Remove: " + "<b>" + _.escape(tagName) + "</b> assignment from" + " " + "<b>" + assetName + " ?</b></div>",
                     titleMessage: Messages.removeTag,
                     okText: "Remove",
                     showLoader: that.showLoader.bind(that),
@@ -1022,7 +1048,7 @@ define(['require',
                         relationshipGuid: termObj.relationGuid
                     },
                     collection: that.glossaryCollection,
-                    msg: "<div class='ellipsis'>Remove: " + "<b>" + _.escape(termName) + "</b> assignment from" + " " + "<b>" + assetname + "?</b></div>",
+                    msg: "<div class='ellipsis-with-margin'>Remove: " + "<b>" + _.escape(termName) + "</b> assignment from" + " " + "<b>" + assetname + "?</b></div>",
                     titleMessage: Messages.glossary.removeTermfromEntity,
                     isEntityView: true,
                     buttonText: "Remove",

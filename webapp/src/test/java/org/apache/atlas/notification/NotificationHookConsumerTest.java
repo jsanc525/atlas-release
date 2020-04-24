@@ -22,6 +22,8 @@ import org.apache.atlas.AtlasServiceException;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.kafka.AtlasKafkaMessage;
+import org.apache.atlas.kafka.KafkaNotification;
+import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasEntity.AtlasEntitiesWithExtInfo;
 import org.apache.atlas.model.instance.EntityMutationResponse;
 import org.apache.atlas.model.notification.HookNotification.HookNotificationType;
@@ -84,7 +86,7 @@ public class NotificationHookConsumerTest {
         MockitoAnnotations.initMocks(this);
 
         AtlasType                mockType   = mock(AtlasType.class);
-        AtlasEntitiesWithExtInfo mockEntity = mock(AtlasEntitiesWithExtInfo.class);
+        AtlasEntitiesWithExtInfo mockEntity = new AtlasEntitiesWithExtInfo(mock(AtlasEntity.class));
 
         when(typeRegistry.getType(anyString())).thenReturn(mockType);
         when(instanceConverter.toAtlasEntities(anyList())).thenReturn(mockEntity);
@@ -136,7 +138,7 @@ public class NotificationHookConsumerTest {
         when(message.getType()).thenReturn(HookNotificationType.ENTITY_CREATE);
         when(message.getEntities()).thenReturn(Arrays.asList(mock));
 
-        hookConsumer.handleMessage(new AtlasKafkaMessage(message, -1, -1));
+        hookConsumer.handleMessage(new AtlasKafkaMessage(message, -1, KafkaNotification.ATLAS_HOOK_TOPIC, -1));
 
         verify(consumer).commit(any(TopicPartition.class), anyInt());
     }
@@ -150,7 +152,7 @@ public class NotificationHookConsumerTest {
 
         when(atlasEntityStore.createOrUpdate(any(EntityStream.class), anyBoolean())).thenThrow(new RuntimeException("Simulating exception in processing message"));
 
-        hookConsumer.handleMessage(new AtlasKafkaMessage(message, -1, -1));
+        hookConsumer.handleMessage(new AtlasKafkaMessage(message, -1, KafkaNotification.ATLAS_HOOK_TOPIC, -1));
 
         verifyZeroInteractions(consumer);
     }

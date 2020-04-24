@@ -609,7 +609,7 @@
                 <graphdb.backend.impl>org.apache.atlas.repository.graphdb.janus.AtlasJanusGraphDatabase</graphdb.backend.impl>
                 <graph.index.backend>solr</graph.index.backend>
                 <tests.solr.embedded>true</tests.solr.embedded>
-                <distro.exclude.packages>WEB-INF/lib/je-*.jar,WEB-INF/lib/solr-test-framework-*.jar, WEB-INF/lib/jts-*.jar,WEB-INF/lib/logback-*.jar</distro.exclude.packages>
+                <distro.exclude.packages>WEB-INF/lib/je-*.jar,WEB-INF/lib/solr-test-framework-*.jar, WEB-INF/lib/jts-*.jar,WEB-INF/lib/logback-*.jar,WEB-INF/lib/dom4j-*.jar</distro.exclude.packages>
             </properties>
         </profile>
 
@@ -629,7 +629,7 @@
                 <graphdb.backend.impl>org.apache.atlas.repository.graphdb.janus.AtlasJanusGraphDatabase</graphdb.backend.impl>
                 <graph.index.backend>solr</graph.index.backend>
                 <tests.solr.embedded>true</tests.solr.embedded>
-                <distro.exclude.packages>WEB-INF/lib/je-*.jar,WEB-INF/lib/solr-test-framework-*.jar, WEB-INF/lib/jts-*.jar,WEB-INF/lib/logback-*.jar</distro.exclude.packages>
+                <distro.exclude.packages>WEB-INF/lib/je-*.jar,WEB-INF/lib/solr-test-framework-*.jar, WEB-INF/lib/jts-*.jar,WEB-INF/lib/logback-*.jar,WEB-INF/lib/dom4j-*.jar</distro.exclude.packages>
             </properties>
         </profile>
 
@@ -679,16 +679,17 @@
         <gson.version>2.5</gson.version>
         <fastutil.version>6.5.16</fastutil.version>
         <guice.version>4.1.0</guice.version>
-        <spring.version>4.3.18.RELEASE</spring.version>
-        <spring.security.version>4.2.7.RELEASE</spring.security.version>
+        <spring.version>4.3.20.RELEASE</spring.version>
+        <spring.security.version>4.2.13.RELEASE</spring.security.version>
 
         <javax.servlet.version>3.1.0</javax.servlet.version>
-        <guava.version>25.1-jre</guava.version>
+        <guava.version>28.0-jre</guava.version>
         <antlr4.version>4.7</antlr4.version>
 
         <!-- Needed for hooks -->
         <aopalliance.version>1.0</aopalliance.version>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
+        <jackson.databind.version>2.10.0</jackson.databind.version>
 
         <!-- Apache commons -->
         <commons-conf.version>1.10</commons-conf.version>

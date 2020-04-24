@@ -19,6 +19,7 @@
 package org.apache.atlas;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Enum that encapsulated each property name and its default value.
@@ -39,16 +40,30 @@ public enum AtlasConfiguration {
     NOTIFICATION_HOOK_TOPIC_NAME("atlas.notification.hook.topic.name", "ATLAS_HOOK"),
     NOTIFICATION_ENTITIES_TOPIC_NAME("atlas.notification.entities.topic.name", "ATLAS_ENTITIES"),
 
+    NOTIFICATION_HOOK_CONSUMER_TOPIC_NAMES("atlas.notification.hook.consumer.topic.names", "ATLAS_HOOK"), //  a comma separated list of topic names
+    NOTIFICATION_ENTITIES_CONSUMER_TOPIC_NAMES("atlas.notification.entities.consumer.topic.names", "ATLAS_ENTITIES"), //  a comma separated list of topic names
+
     NOTIFICATION_MESSAGE_MAX_LENGTH_BYTES("atlas.notification.message.max.length.bytes", (1000 * 1000)),
     NOTIFICATION_MESSAGE_COMPRESSION_ENABLED("atlas.notification.message.compression.enabled", true),
     NOTIFICATION_SPLIT_MESSAGE_SEGMENTS_WAIT_TIME_SECONDS("atlas.notification.split.message.segments.wait.time.seconds", 15 * 60),
     NOTIFICATION_SPLIT_MESSAGE_BUFFER_PURGE_INTERVAL_SECONDS("atlas.notification.split.message.buffer.purge.interval.seconds", 5 * 60),
 
+    NOTIFICATION_CREATE_SHELL_ENTITY_FOR_NON_EXISTING_REF("atlas.notification.consumer.create.shell.entity.for.non-existing.ref", true),
+    REST_API_CREATE_SHELL_ENTITY_FOR_NON_EXISTING_REF("atlas.rest.create.shell.entity.for.non-existing.ref", false),
+
     GRAPHSTORE_INDEXED_STRING_SAFE_LENGTH("atlas.graphstore.indexed.string.safe.length", Short.MAX_VALUE),  // based on org.apache.hadoop.hbase.client.Mutation.checkRow()
+
+    RELATIONSHIP_WARN_NO_RELATIONSHIPS("atlas.relationships.warnOnNoRelationships", false),
+    ENTITY_CHANGE_NOTIFY_IGNORE_RELATIONSHIP_ATTRIBUTES("atlas.entity.change.notify.ignore.relationship.attributes", true),
+
+    CLASSIFICATION_PROPAGATION_DEFAULT("atlas.classification.propagation.default", true),
 
     //search configuration
     SEARCH_MAX_LIMIT("atlas.search.maxlimit", 10000),
-    SEARCH_DEFAULT_LIMIT("atlas.search.defaultlimit", 100);
+    SEARCH_DEFAULT_LIMIT("atlas.search.defaultlimit", 100),
+
+    IMPORT_TEMP_DIRECTORY("atlas.import.temp.directory", ""),
+    LINEAGE_USING_GREMLIN("atlas.lineage.query.use.gremlin", false);
 
     private static final Configuration APPLICATION_PROPERTIES;
 
@@ -82,6 +97,28 @@ public enum AtlasConfiguration {
 
     public String getString() {
         return APPLICATION_PROPERTIES.getString(propertyName, defaultValue.toString());
+    }
+
+    public String[] getStringArray() {
+        String[] ret = APPLICATION_PROPERTIES.getStringArray(propertyName);
+
+        if (ret == null ||  ret.length == 0 || (ret.length == 1 && StringUtils.isEmpty(ret[0]))) {
+            if (defaultValue != null) {
+                ret = StringUtils.split(defaultValue.toString(), ',');
+            }
+        }
+
+        return ret;
+    }
+
+    public String[] getStringArray(String... defaultValue) {
+        String[] ret = APPLICATION_PROPERTIES.getStringArray(propertyName);
+
+        if (ret == null ||  ret.length == 0 || (ret.length == 1 && StringUtils.isEmpty(ret[0]))) {
+            ret = defaultValue;
+        }
+
+        return ret;
     }
 
     public Object get() {

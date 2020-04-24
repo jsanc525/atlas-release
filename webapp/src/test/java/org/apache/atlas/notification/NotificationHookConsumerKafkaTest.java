@@ -23,6 +23,7 @@ import org.apache.atlas.AtlasException;
 import org.apache.atlas.AtlasServiceException;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.kafka.*;
+import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.model.instance.AtlasEntity.AtlasEntitiesWithExtInfo;
 import org.apache.atlas.model.notification.HookNotification;
 import org.apache.atlas.util.AtlasMetricsUtil;
@@ -41,8 +42,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -84,12 +85,12 @@ public class NotificationHookConsumerKafkaTest {
     @Mock
     private AtlasMetricsUtil metricsUtil;
 
-    @BeforeTest
+    @BeforeMethod
     public void setup() throws AtlasException, InterruptedException, AtlasBaseException {
         MockitoAnnotations.initMocks(this);
 
         AtlasType                mockType   = mock(AtlasType.class);
-        AtlasEntitiesWithExtInfo mockEntity = mock(AtlasEntitiesWithExtInfo.class);
+        AtlasEntitiesWithExtInfo mockEntity = new AtlasEntitiesWithExtInfo(createV2Entity());
 
         when(typeRegistry.getType(anyString())).thenReturn(mockType);
 
@@ -98,7 +99,7 @@ public class NotificationHookConsumerKafkaTest {
         initNotificationService();
     }
 
-    @AfterTest
+    @AfterMethod
     public void shutdown() {
         cleanUpNotificationService();
     }
@@ -120,7 +121,6 @@ public class NotificationHookConsumerKafkaTest {
         consumeOneMessage(consumer, hookConsumer);
 
         verify(atlasEntityStore,times(2)).createOrUpdate(any(EntityStream.class), anyBoolean());
-        reset(atlasEntityStore);
     }
 
     @Test
@@ -151,8 +151,6 @@ public class NotificationHookConsumerKafkaTest {
         consumeOneMessage(consumer, hookConsumer);
 
         assertNull(failedCommitOffsetRecorder.getCurrentOffset());
-
-        reset(atlasEntityStore);
     }
 
     @Test(dependsOnMethods = "testConsumerConsumesNewMessageWithAutoCommitDisabled")
@@ -182,7 +180,10 @@ public class NotificationHookConsumerKafkaTest {
 
     ExceptionThrowingCommitConsumer createNewConsumerThatThrowsExceptionInCommit(KafkaNotification kafkaNotification, boolean autoCommitEnabled) {
         Properties prop = kafkaNotification.getConsumerProperties(NotificationInterface.NotificationType.HOOK);
-        KafkaConsumer consumer = kafkaNotification.getKafkaConsumer(prop, NotificationInterface.NotificationType.HOOK, true);
+
+        prop.put("enable.auto.commit", autoCommitEnabled);
+
+        KafkaConsumer consumer = kafkaNotification.getOrCreateKafkaConsumer(null, prop, NotificationInterface.NotificationType.HOOK, 0);
         return new ExceptionThrowingCommitConsumer(NotificationInterface.NotificationType.HOOK, consumer, autoCommitEnabled, 1000);
     }
 
@@ -213,6 +214,16 @@ public class NotificationHookConsumerKafkaTest {
         entity.set(NAME, "db" + randomString());
         entity.set(DESCRIPTION, randomString());
         entity.set(QUALIFIED_NAME, randomString());
+
+        return entity;
+    }
+
+    AtlasEntity createV2Entity() {
+        final AtlasEntity entity = new AtlasEntity(AtlasClient.DATA_SET_SUPER_TYPE);
+
+        entity.setAttribute(NAME, "db" + randomString());
+        entity.setAttribute(DESCRIPTION, randomString());
+        entity.setAttribute(QUALIFIED_NAME, randomString());
 
         return entity;
     }

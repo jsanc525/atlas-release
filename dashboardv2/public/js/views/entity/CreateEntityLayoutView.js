@@ -103,6 +103,7 @@ define(['require',
                 }).open();
                 this.modal.$el.find('button.ok').attr("disabled", true);
                 this.modal.on('ok', function(e) {
+                    that.modal.$el.find('button.ok, button.cancel').attr("disabled", true);
                     that.okButton();
                 });
                 this.modal.on('closeModal', function() {
@@ -498,7 +499,7 @@ define(['require',
                     entityLabel = this.capitalize(value.name);
 
                 return '<div class=" row ' + value.isOptional + '"><span class="col-sm-3">' +
-                    '<label><span class="' + (value.isOptional ? 'true' : 'false required') + '">' + entityLabel + '</span><span class="center-block ellipsis text-gray" title="Data Type : ' + value.typeName + '">' + '(' + Utils.escapeHtml(value.typeName) + ')' + '</span></label></span>' +
+                    '<label><span class="' + (value.isOptional ? 'true' : 'false required') + '">' + entityLabel + '</span><span class="center-block ellipsis-with-margin text-gray" title="Data Type : ' + value.typeName + '">' + '(' + Utils.escapeHtml(value.typeName) + ')' + '</span></label></span>' +
                     '<span class="col-sm-9">' + (this.getElement(object)) +
                     '</input></span></div>';
             },
@@ -782,6 +783,7 @@ define(['require',
                             that.hideLoader({
                                 editVisiblityOfEntitySelectionBox: true
                             });
+                            that.modal.$el.find('button.ok, button.cancel').attr("disabled", false);
                         }
                     });
 

@@ -18,6 +18,7 @@
 package org.apache.atlas.repository.tagpropagation;
 
 import com.vividsolutions.jts.util.Assert;
+import org.apache.atlas.AtlasErrorCode;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.TestModules;
 import org.apache.atlas.discovery.AtlasLineageService;
@@ -35,7 +36,6 @@ import org.apache.atlas.model.typedef.AtlasTypesDef;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.impexp.ImportService;
 import org.apache.atlas.repository.impexp.ZipFileResourceTestUtils;
-import org.apache.atlas.repository.impexp.ZipSource;
 import org.apache.atlas.repository.store.graph.AtlasEntityStore;
 import org.apache.atlas.repository.store.graph.AtlasRelationshipStore;
 import org.apache.atlas.runner.LocalSolrRunner;
@@ -49,8 +49,8 @@ import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -282,9 +282,9 @@ public class ClassificationPropagationTest {
         AtlasEntity employees_union_table   = getEntity(EMPLOYEES_UNION_TABLE);
 
         AtlasClassification tag1 = new AtlasClassification("tag1"); tag1.setPropagate(true); tag1.setEntityGuid(hdfs_employees.getGuid());
-        AtlasClassification tag2 = new AtlasClassification("tag2"); tag1.setPropagate(true); tag2.setEntityGuid(employees2_table.getGuid());
-        AtlasClassification tag3 = new AtlasClassification("tag3"); tag1.setPropagate(true); tag3.setEntityGuid(employees_union_process.getGuid());
-        AtlasClassification tag4 = new AtlasClassification("tag4"); tag1.setPropagate(true); tag4.setEntityGuid(employees_union_table.getGuid());
+        AtlasClassification tag2 = new AtlasClassification("tag2"); tag2.setPropagate(true); tag2.setEntityGuid(employees2_table.getGuid());
+        AtlasClassification tag3 = new AtlasClassification("tag3"); tag3.setPropagate(true); tag3.setEntityGuid(employees_union_process.getGuid());
+        AtlasClassification tag4 = new AtlasClassification("tag4"); tag4.setPropagate(true); tag4.setEntityGuid(employees_union_table.getGuid());
 
         // add tag1 to hdfs_employees, tag2 to employees2, tag3 to process3, tag4 to employees_union
         addClassification(hdfs_employees, tag1);
@@ -319,20 +319,16 @@ public class ClassificationPropagationTest {
         // validate tag2 is propagated to employees_union
         assertClassificationExistInEntity(EMPLOYEES_UNION_TABLE, tag2);
 
-        //update propagation to BOTH for edge process3 --> employee_union
+        //update propagation to BOTH for edge process3 --> employee_union. This should fail
         AtlasRelationship process3_employee_union_relationship = getRelationship(EMPLOYEES_UNION_PROCESS, EMPLOYEES_UNION_TABLE);
         assertEquals(process3_employee_union_relationship.getPropagateTags(), ONE_TO_TWO);
         process3_employee_union_relationship.setPropagateTags(BOTH);
-        relationshipStore.update(process3_employee_union_relationship);
 
-        // process3 should get 'tag4' from employee_union and employee_union should get tag3 from process3 (BOTH)
-        assertClassificationExistInEntity(EMPLOYEES_UNION_PROCESS, tag4);
-        assertClassificationExistInEntity(EMPLOYEES_UNION_TABLE, tag3);
-
-        //update propagation to ONE_TO_TWO for edge process3 --> employee_union
-        process3_employee_union_relationship.setPropagateTags(ONE_TO_TWO);
-        relationshipStore.update(process3_employee_union_relationship);
-        assertClassificationNotExistInEntity(EMPLOYEES_UNION_PROCESS, tag4);
+        try {
+            relationshipStore.update(process3_employee_union_relationship);
+        } catch (AtlasBaseException ex) {
+            assertEquals(ex.getAtlasErrorCode(), AtlasErrorCode.INVALID_PROPAGATION_TYPE);
+        }
 
         //cleanup
         deleteClassification(hdfs_employees, tag1);
@@ -601,9 +597,8 @@ public class ClassificationPropagationTest {
         }
     }
 
-    public static ZipSource getZipSource(String fileName) throws IOException, AtlasBaseException {
-        FileInputStream fs = ZipFileResourceTestUtils.getFileInputStream(fileName);
-        return new ZipSource(fs);
+    public static InputStream getZipSource(String fileName) throws IOException {
+        return ZipFileResourceTestUtils.getFileInputStream(fileName);
     }
 
     private void loadSampleClassificationDefs() throws AtlasBaseException {

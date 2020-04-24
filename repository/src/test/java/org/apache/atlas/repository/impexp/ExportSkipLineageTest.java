@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 import static org.apache.atlas.repository.impexp.ZipFileResourceTestUtils.loadBaseModel;
@@ -72,6 +73,7 @@ public class ExportSkipLineageTest extends ExportImportTestBase {
     public void setup() throws IOException, AtlasBaseException {
         loadBaseModel(typeDefStore, typeRegistry);
         loadHiveModel(typeDefStore, typeRegistry);
+        RequestContext.get().setImportInProgress(true);
 
         entityStore = new AtlasEntityStoreV2(deleteDelegate, typeRegistry, mockChangeNotifier, graphMapper);
         createEntities(entityStore, ENTITIES_SUB_DIR, new String[]{"db", "table-columns", "table-view", "table-table-lineage"});
@@ -86,11 +88,13 @@ public class ExportSkipLineageTest extends ExportImportTestBase {
     }
 
     @Test
-    public void exportWithoutLineage() {
+    public void exportWithoutLineage() throws IOException, AtlasBaseException {
         final int expectedEntityCount = 3;
 
         AtlasExportRequest request = getRequest();
-        ZipSource source = runExportWithParameters(exportService, request);
+        InputStream inputStream = runExportWithParameters(exportService, request);
+
+        ZipSource source = new ZipSource(inputStream);
         AtlasEntity.AtlasEntityWithExtInfo entities = ZipFileResourceTestUtils.getEntities(source, expectedEntityCount);
 
         int count = 0;
@@ -112,7 +116,7 @@ public class ExportSkipLineageTest extends ExportImportTestBase {
 
             return request;
         } catch (IOException e) {
-            throw new SkipException(String.format("getRequest: '%s' could not be laoded.", filename));
+            throw new SkipException(String.format("getRequest: '%s' could not be loaded.", filename));
         }
     }
 }

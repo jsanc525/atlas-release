@@ -20,13 +20,7 @@ package org.apache.atlas.notification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import kafka.utils.ShutdownableThread;
-import org.apache.atlas.ApplicationProperties;
-import org.apache.atlas.AtlasClient;
-import org.apache.atlas.AtlasClientV2;
-import org.apache.atlas.AtlasConfiguration;
-import org.apache.atlas.AtlasException;
-import org.apache.atlas.AtlasServiceException;
-import org.apache.atlas.RequestContext;
+import org.apache.atlas.*;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.kafka.AtlasKafkaMessage;
@@ -72,7 +66,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
@@ -117,8 +110,12 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
     private static final String ATTRIBUTE_INPUTS         = "inputs";
     private static final String ATTRIBUTE_QUALIFIED_NAME = "qualifiedName";
 
+    // from org.apache.hadoop.hive.ql.parse.SemanticAnalyzer
+    public static final String DUMMY_DATABASE               = "_dummy_database";
+    public static final String DUMMY_TABLE                  = "_dummy_table";
+    public static final String VALUES_TMP_TABLE_NAME_PREFIX = "Values__Tmp__Table__";
+
     private static final String THREADNAME_PREFIX = NotificationHookConsumer.class.getSimpleName();
-    private static final String ATLAS_HOOK_TOPIC  = AtlasConfiguration.NOTIFICATION_HOOK_TOPIC_NAME.getString();
 
     public static final String CONSUMER_THREADS_PROPERTY         = "atlas.notification.hook.numthreads";
     public static final String CONSUMER_RETRIES_PROPERTY         = "atlas.notification.hook.maxretries";
@@ -135,6 +132,13 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
     public static final String CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_PATTERN                 = "atlas.notification.consumer.preprocess.hive_table.ignore.pattern";
     public static final String CONSUMER_PREPROCESS_HIVE_TABLE_PRUNE_PATTERN                  = "atlas.notification.consumer.preprocess.hive_table.prune.pattern";
     public static final String CONSUMER_PREPROCESS_HIVE_TABLE_CACHE_SIZE                     = "atlas.notification.consumer.preprocess.hive_table.cache.size";
+    public static final String CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_ENABLED              = "atlas.notification.consumer.preprocess.hive_db.ignore.dummy.enabled";
+    public static final String CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_NAMES                = "atlas.notification.consumer.preprocess.hive_db.ignore.dummy.names";
+    public static final String CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_ENABLED           = "atlas.notification.consumer.preprocess.hive_table.ignore.dummy.enabled";
+    public static final String CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_NAMES             = "atlas.notification.consumer.preprocess.hive_table.ignore.dummy.names";
+    public static final String CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES_ENABLED   = "atlas.notification.consumer.preprocess.hive_table.ignore.name.prefixes.enabled";
+    public static final String CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES           = "atlas.notification.consumer.preprocess.hive_table.ignore.name.prefixes";
+    public static final String CONSUMER_PREPROCESS_HIVE_PROCESS_UPD_NAME_WITH_QUALIFIED_NAME = "atlas.notification.consumer.preprocess.hive_process.update.name.with.qualified_name";
     public static final String CONSUMER_PREPROCESS_HIVE_TYPES_REMOVE_OWNEDREF_ATTRS          = "atlas.notification.consumer.preprocess.hive_types.remove.ownedref.attrs";
     public static final String CONSUMER_PREPROCESS_RDBMS_TYPES_REMOVE_OWNEDREF_ATTRS         = "atlas.notification.consumer.preprocess.rdbms_types.remove.ownedref.attrs";
 
@@ -152,14 +156,19 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
     private final int                           commitBatchSize;
     private final boolean                       skipHiveColumnLineageHive20633;
     private final int                           skipHiveColumnLineageHive20633InputsThreshold;
+    private final boolean                       updateHiveProcessNameWithQualifiedName;
     private final int                           largeMessageProcessingTimeThresholdMs;
     private final boolean                       consumerDisabled;
     private final List<Pattern>                 hiveTablesToIgnore = new ArrayList<>();
     private final List<Pattern>                 hiveTablesToPrune  = new ArrayList<>();
+    private final List<String>                  hiveDummyDatabasesToIgnore;
+    private final List<String>                  hiveDummyTablesToIgnore;
+    private final List<String>                  hiveTablePrefixesToIgnore;
     private final Map<String, PreprocessAction> hiveTablesCache;
     private final boolean                       hiveTypesRemoveOwnedRefAttrs;
     private final boolean                       rdbmsTypesRemoveOwnedRefAttrs;
     private final boolean                       preprocessEnabled;
+    private final boolean createShellEntityForNonExistingReference;
     private final NotificationInterface         notificationInterface;
     private final Configuration                 applicationProperties;
     private       ExecutorService               executors;
@@ -192,8 +201,10 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
 
         skipHiveColumnLineageHive20633                = applicationProperties.getBoolean(CONSUMER_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633, false);
         skipHiveColumnLineageHive20633InputsThreshold = applicationProperties.getInt(CONSUMER_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633_INPUTS_THRESHOLD, 15); // skip if avg # of inputs is > 15
+        updateHiveProcessNameWithQualifiedName        = applicationProperties.getBoolean(CONSUMER_PREPROCESS_HIVE_PROCESS_UPD_NAME_WITH_QUALIFIED_NAME, true);
         consumerDisabled                              = applicationProperties.getBoolean(CONSUMER_DISABLED, false);
         largeMessageProcessingTimeThresholdMs         = applicationProperties.getInt("atlas.notification.consumer.large.message.processing.time.threshold.ms", 60 * 1000);  //  60 sec by default
+        createShellEntityForNonExistingReference      = AtlasConfiguration.NOTIFICATION_CREATE_SHELL_ENTITY_FOR_NON_EXISTING_REF.getBoolean();
 
         String[] patternHiveTablesToIgnore = applicationProperties.getStringArray(CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_PATTERN);
         String[] patternHiveTablesToPrune  = applicationProperties.getStringArray(CONSUMER_PREPROCESS_HIVE_TABLE_PRUNE_PATTERN);
@@ -230,9 +241,49 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
             hiveTablesCache = Collections.emptyMap();
         }
 
+        boolean hiveDbIgnoreDummyEnabled         = applicationProperties.getBoolean(CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_ENABLED, true);
+        boolean hiveTableIgnoreDummyEnabled      = applicationProperties.getBoolean(CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_ENABLED, true);
+        boolean hiveTableIgnoreNamePrefixEnabled = applicationProperties.getBoolean(CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES_ENABLED, true);
+
+        LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_ENABLED, hiveDbIgnoreDummyEnabled);
+        LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_ENABLED, hiveTableIgnoreDummyEnabled);
+        LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES_ENABLED, hiveTableIgnoreNamePrefixEnabled);
+
+        if (hiveDbIgnoreDummyEnabled) {
+            String[] dummyDatabaseNames = applicationProperties.getStringArray(CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_NAMES);
+
+            hiveDummyDatabasesToIgnore = trimAndPurge(dummyDatabaseNames, DUMMY_DATABASE);
+
+            LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_DB_IGNORE_DUMMY_NAMES, StringUtils.join(hiveDummyDatabasesToIgnore, ','));
+        } else {
+            hiveDummyDatabasesToIgnore = Collections.emptyList();
+        }
+
+        if (hiveTableIgnoreDummyEnabled) {
+            String[] dummyTableNames = applicationProperties.getStringArray(CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_NAMES);
+
+            hiveDummyTablesToIgnore = trimAndPurge(dummyTableNames, DUMMY_TABLE);
+
+            LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_DUMMY_NAMES, StringUtils.join(hiveDummyTablesToIgnore, ','));
+        } else {
+            hiveDummyTablesToIgnore = Collections.emptyList();
+        }
+
+        if (hiveTableIgnoreNamePrefixEnabled) {
+            String[] ignoreNamePrefixes = applicationProperties.getStringArray(CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES);
+
+            hiveTablePrefixesToIgnore = trimAndPurge(ignoreNamePrefixes, VALUES_TMP_TABLE_NAME_PREFIX);
+
+            LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_TABLE_IGNORE_NAME_PREFIXES, StringUtils.join(hiveTablePrefixesToIgnore, ','));
+        } else {
+            hiveTablePrefixesToIgnore = Collections.emptyList();
+        }
+
+        LOG.info("{}={}", CONSUMER_PREPROCESS_HIVE_PROCESS_UPD_NAME_WITH_QUALIFIED_NAME, updateHiveProcessNameWithQualifiedName);
+
         hiveTypesRemoveOwnedRefAttrs  = applicationProperties.getBoolean(CONSUMER_PREPROCESS_HIVE_TYPES_REMOVE_OWNEDREF_ATTRS, true);
         rdbmsTypesRemoveOwnedRefAttrs = applicationProperties.getBoolean(CONSUMER_PREPROCESS_RDBMS_TYPES_REMOVE_OWNEDREF_ATTRS, true);
-        preprocessEnabled             = !hiveTablesToIgnore.isEmpty() || !hiveTablesToPrune.isEmpty() || skipHiveColumnLineageHive20633 || hiveTypesRemoveOwnedRefAttrs || rdbmsTypesRemoveOwnedRefAttrs;
+        preprocessEnabled             = skipHiveColumnLineageHive20633 || updateHiveProcessNameWithQualifiedName || hiveTypesRemoveOwnedRefAttrs || rdbmsTypesRemoveOwnedRefAttrs || !hiveTablesToIgnore.isEmpty() || !hiveTablesToPrune.isEmpty() || !hiveDummyDatabasesToIgnore.isEmpty() || !hiveDummyTablesToIgnore.isEmpty() || !hiveTablePrefixesToIgnore.isEmpty();
 
         LOG.info("{}={}", CONSUMER_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633, skipHiveColumnLineageHive20633);
         LOG.info("{}={}", CONSUMER_SKIP_HIVE_COLUMN_LINEAGE_HIVE_20633_INPUTS_THRESHOLD, skipHiveColumnLineageHive20633InputsThreshold);
@@ -368,6 +419,26 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
         }
     }
 
+    private List<String> trimAndPurge(String[] values, String defaultValue) {
+        final List<String> ret;
+
+        if (values != null && values.length > 0) {
+            ret = new ArrayList<>(values.length);
+
+            for (String val : values) {
+                if (StringUtils.isNotBlank(val)) {
+                    ret.add(val.trim());
+                }
+            }
+        } else if (StringUtils.isNotBlank(defaultValue)) {
+            ret = Collections.singletonList(defaultValue.trim());
+        } else {
+            ret = Collections.emptyList();
+        }
+
+        return ret;
+    }
+
     static class AdaptiveWaiter {
         private final long increment;
         private final long maxDuration;
@@ -496,6 +567,33 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
                     return;
                 }
 
+                // covert V1 messages to V2 to enable preProcess
+                try {
+                    switch (message.getType()) {
+                        case ENTITY_CREATE: {
+                            final EntityCreateRequest      createRequest = (EntityCreateRequest) message;
+                            final AtlasEntitiesWithExtInfo entities      = instanceConverter.toAtlasEntities(createRequest.getEntities());
+                            final EntityCreateRequestV2    v2Request     = new EntityCreateRequestV2(message.getUser(), entities);
+
+                            kafkaMsg = new AtlasKafkaMessage<>(v2Request, kafkaMsg.getOffset(), kafkaMsg.getTopic(), kafkaMsg.getPartition());
+                            message  = kafkaMsg.getMessage();
+                        }
+                        break;
+
+                        case ENTITY_FULL_UPDATE: {
+                            final EntityUpdateRequest      updateRequest = (EntityUpdateRequest) message;
+                            final AtlasEntitiesWithExtInfo entities      = instanceConverter.toAtlasEntities(updateRequest.getEntities());
+                            final EntityUpdateRequestV2    v2Request     = new EntityUpdateRequestV2(messageUser, entities);
+
+                            kafkaMsg = new AtlasKafkaMessage<>(v2Request, kafkaMsg.getOffset(), kafkaMsg.getTopic(), kafkaMsg.getPartition());
+                            message  = kafkaMsg.getMessage();
+                        }
+                        break;
+                    }
+                } catch (AtlasBaseException excp) {
+                    LOG.error("handleMessage(): failed to convert V1 message to V2", message.getType().name());
+                }
+
                 PreprocessorContext context = preProcessNotificationMessage(kafkaMsg);
 
                 if (isEmptyMessage(kafkaMsg)) {
@@ -517,6 +615,7 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
 
                         requestContext.setUser(messageUser, null);
                         requestContext.setInNotificationProcessing(true);
+                        requestContext.setCreateShellEntityForNonExistingReference(createShellEntityForNonExistingReference);
 
                         switch (message.getType()) {
                             case ENTITY_CREATE: {
@@ -701,7 +800,7 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
 
                 stats.timeTakenMs = System.currentTimeMillis() - startTime;
 
-                metricsUtil.onNotificationProcessingComplete(kafkaMsg.getOffset(), stats);
+                metricsUtil.onNotificationProcessingComplete(kafkaMsg.getTopic(), kafkaMsg.getPartition(), kafkaMsg.getOffset(), stats);
 
                 if (stats.timeTakenMs > largeMessageProcessingTimeThresholdMs) {
                     String strMessage = AbstractNotification.getMessageJson(message);
@@ -785,9 +884,8 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
             try {
                 recordFailedMessages();
 
-                TopicPartition partition = new TopicPartition(ATLAS_HOOK_TOPIC, kafkaMessage.getPartition());
+                consumer.commit(kafkaMessage.getTopicPartition(), kafkaMessage.getOffset() + 1);
 
-                consumer.commit(partition, kafkaMessage.getOffset() + 1);
                 commitSucceessStatus = true;
             } finally {
                 failedCommitOffsetRecorder.recordIfFailed(commitSucceessStatus, kafkaMessage.getOffset());
@@ -846,7 +944,7 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
         PreprocessorContext context = null;
 
         if (preprocessEnabled) {
-            context = new PreprocessorContext(kafkaMsg, typeRegistry, hiveTablesToIgnore, hiveTablesToPrune, hiveTablesCache, hiveTypesRemoveOwnedRefAttrs, rdbmsTypesRemoveOwnedRefAttrs);
+            context = new PreprocessorContext(kafkaMsg, typeRegistry, hiveTablesToIgnore, hiveTablesToPrune, hiveTablesCache, hiveDummyDatabasesToIgnore, hiveDummyTablesToIgnore, hiveTablePrefixesToIgnore, hiveTypesRemoveOwnedRefAttrs, rdbmsTypesRemoveOwnedRefAttrs, updateHiveProcessNameWithQualifiedName);
 
             if (context.isHivePreprocessEnabled()) {
                 preprocessHiveTypes(context);
@@ -862,7 +960,7 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
 
             context.moveRegisteredReferredEntities();
 
-            if (context.isHivePreprocessEnabled() && CollectionUtils.isNotEmpty(context.getEntities())) {
+            if (context.isHivePreprocessEnabled() && CollectionUtils.isNotEmpty(context.getEntities()) && context.getEntities().size() > 1) {
                 // move hive_process and hive_column_lineage entities to end of the list
                 List<AtlasEntity> entities = context.getEntities();
                 int               count    = entities.size();
@@ -881,7 +979,7 @@ public class NotificationHookConsumer implements Service, ActiveStateChangeHandl
                 }
 
                 if (entities.size() - count > 0) {
-                    LOG.info("moved {} hive_process/hive_column_lineage entities to end of list (listSize={})", entities.size() - count, entities.size());
+                    LOG.info("preprocess: moved {} hive_process/hive_column_lineage entities to end of list (listSize={}). topic-offset={}, partition={}", entities.size() - count, entities.size(), kafkaMsg.getOffset(), kafkaMsg.getPartition());
                 }
             }
         }

@@ -18,7 +18,8 @@
 define(['require',
     'utils/Utils',
     'd3',
-    'marionette'
+    'marionette',
+    'jquery-ui'
 ], function(require, Utils, d3) {
     'use strict';
     _.mixin({
@@ -76,6 +77,7 @@ define(['require',
             } else if (isPopOverEl.$tip) {
                 $('.popover').not(isPopOverEl.$tip).popover('hide');
             }
+            $(".tooltip").tooltip("hide");
         }
     });
     $('body').on('hidden.bs.popover', function(e) {
@@ -201,6 +203,29 @@ define(['require',
             return adapter;
         });
 
+    $.widget("custom.atlasAutoComplete", $.ui.autocomplete, {
+        _create: function() {
+            this._super();
+            this.widget().menu("option", "items", "> :not(.ui-autocomplete-category,.empty)");
+        },
+        _renderMenu: function(ul, items) {
+            var that = this,
+                currentCategory = "";
+            items = _.sortBy(items, 'order');
+            $.each(items, function(index, item) {
+                var li;
+                if (item.category != currentCategory) {
+                    ul.append("<li class='ui-autocomplete-category'>" + item.category + "</li>");
+                    currentCategory = item.category;
+                }
+                that._renderItemData(ul, item);
+            });
+        },
+        _renderItemData: function(ul, item) {
+            return this._renderItem(ul, item);
+        }
+    });
+
     // For placeholder support 
     if (!('placeholder' in HTMLInputElement.prototype)) {
         var originalRender = Backbone.Marionette.LayoutView.prototype.render;
@@ -219,10 +244,17 @@ define(['require',
     });
 
     // For adding tooltip globally
-    $('body').tooltip({
-        selector: '[title]',
-        placement: 'bottom',
-        container: 'body'
+    $("body").on('mouseenter', '.select2-selection__choice', function() {
+        $(this).attr("title", "");
     });
+    if ($('body').tooltip) {
+        $('body').tooltip({
+            selector: '[title]:not(".select2-selection__choice")',
+            placement: function() {
+                return this.$element.attr("data-placement") || "bottom";
+            },
+            container: 'body'
+        });
+    }
 
 })

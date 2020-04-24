@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-define(['require', ''], function(require) {
+define(['require'], function(require) {
     'use strict';
     var LinegaeUtils = {};
     LinegaeUtils.DragNode = function(options) {
@@ -231,7 +231,9 @@ define(['require', ''], function(require) {
                 zoomListener.translate([xa, ya]);
                 zoom.scale(scale);
                 afterCenterZoomed({ newScale: scale, newTranslate: [xa, ya] });
-                LinegaeUtils.refreshGraphForIE({ "edgeEl": edgePathEl })
+                if (platform.name === "IE") {
+                    LinegaeUtils.refreshGraphForIE({ "edgeEl": edgePathEl })
+                }
             }
         }
     }

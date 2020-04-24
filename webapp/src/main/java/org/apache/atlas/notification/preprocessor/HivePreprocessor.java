@@ -17,6 +17,7 @@
  */
 package org.apache.atlas.notification.preprocessor;
 
+import com.google.common.base.Strings;
 import org.apache.atlas.model.instance.AtlasEntity;
 import org.apache.atlas.notification.preprocessor.PreprocessorContext.PreprocessAction;
 import org.apache.commons.lang.StringUtils;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class HivePreprocessor {
     private static final Logger LOG = LoggerFactory.getLogger(HivePreprocessor.class);
@@ -33,6 +35,23 @@ public class HivePreprocessor {
     private static final String RELATIONSHIP_TYPE_HIVE_TABLE_COLUMNS        = "hive_table_columns";
     private static final String RELATIONSHIP_TYPE_HIVE_TABLE_PARTITION_KEYS = "hive_table_partitionkeys";
     private static final String RELATIONSHIP_TYPE_HIVE_TABLE_STORAGEDESC    = "hive_table_storagedesc";
+
+    static class HiveDbPreprocessor extends EntityPreprocessor {
+        public HiveDbPreprocessor() {
+            super(TYPE_HIVE_DB);
+        }
+
+        @Override
+        public void preprocess(AtlasEntity entity, PreprocessorContext context) {
+            if (!context.isIgnoredEntity(entity.getGuid())) {
+                PreprocessAction action = context.getPreprocessActionForHiveDb(getName(entity));
+
+                if (action == PreprocessAction.IGNORE) {
+                    context.addToIgnoredEntities(entity);
+                }
+            }
+        }
+    }
 
     static class HiveTablePreprocessor extends EntityPreprocessor {
         public HiveTablePreprocessor() {
@@ -144,23 +163,44 @@ public class HivePreprocessor {
 
         @Override
         public void preprocess(AtlasEntity entity, PreprocessorContext context) {
+            if (context.updateHiveProcessNameWithQualifiedName()) {
+                Object name          = entity.getAttribute(ATTRIBUTE_NAME);
+                Object qualifiedName = entity.getAttribute(ATTRIBUTE_QUALIFIED_NAME);
+
+                if (!Objects.equals(name, qualifiedName)) {
+                    LOG.info("setting {}.name={}. topic-offset={}, partition={}", entity.getTypeName(), qualifiedName, context.getKafkaMessageOffset(), context.getKafkaPartition());
+
+                    entity.setAttribute(ATTRIBUTE_NAME, qualifiedName);
+                }
+            }
+
             if (context.isIgnoredEntity(entity.getGuid())) {
                 context.addToIgnoredEntities(entity); // so that this will be logged with typeName and qualifiedName
             } else {
-                Object inputs  = entity.getAttribute(ATTRIBUTE_INPUTS);
-                Object outputs = entity.getAttribute(ATTRIBUTE_OUTPUTS);
+                Object inputs       = entity.getAttribute(ATTRIBUTE_INPUTS);
+                Object outputs      = entity.getAttribute(ATTRIBUTE_OUTPUTS);
+                String startTime    = String.valueOf(entity.getAttribute(ATTRIBUTE_START_TIME));
+                String endTime      = String.valueOf(entity.getAttribute(ATTRIBUTE_END_TIME));
 
-                int inputsCount  = (inputs instanceof Collection) ? ((Collection) inputs).size() : 0;
-                int outputsCount = (outputs instanceof Collection) ? ((Collection) outputs).size() : 0;
+                if (Strings.isNullOrEmpty(startTime) || "null".equals(startTime)) {
+                    entity.setAttribute(ATTRIBUTE_START_TIME, System.currentTimeMillis());
+                }
+
+                if (Strings.isNullOrEmpty(endTime) || "null".equals(endTime)) {
+                    entity.setAttribute(ATTRIBUTE_END_TIME, System.currentTimeMillis());
+                }
+
+                int inputsCount  = getCollectionSize(inputs);
+                int outputsCount = getCollectionSize(outputs);
 
                 removeIgnoredObjectIds(inputs, context);
                 removeIgnoredObjectIds(outputs, context);
 
                 boolean isInputsEmpty  = isEmpty(inputs);
                 boolean isOutputsEmpty = isEmpty(outputs);
+                boolean isAnyRemoved   = inputsCount > getCollectionSize(inputs) || outputsCount > getCollectionSize(outputs);
 
-                // if inputs/outputs became empty due to removal of ignored entities, ignore the process entity as well
-                if ((inputsCount > 0 && isInputsEmpty) || (outputsCount > 0 && isOutputsEmpty)) {
+                if (isAnyRemoved && (isInputsEmpty || isOutputsEmpty)) {
                     context.addToIgnoredEntities(entity);
 
                     // since the process entity is ignored, entities referenced by inputs/outputs of this process entity
@@ -184,6 +224,10 @@ public class HivePreprocessor {
                     }
                 }
             }
+        }
+
+        private int getCollectionSize(Object obj) {
+            return (obj instanceof Collection) ? ((Collection) obj).size() : 0;
         }
 
         private void removeIgnoredObjectIds(Object obj, PreprocessorContext context) {

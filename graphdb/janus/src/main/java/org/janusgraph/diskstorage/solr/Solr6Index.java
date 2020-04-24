@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -139,6 +141,7 @@ public class Solr6Index implements IndexProvider {
     private static final char   CHROOT_START_CHAR = '/';
 
     private static Solr6Index instance = null;
+    public static final ConfigOption<Boolean> CREATE_SOLR_CLIENT_PER_REQUEST = new ConfigOption(SOLR_NS, "create-client-per-request", "when false, allows the sharing of solr client across other components.", org.janusgraph.diskstorage.configuration.ConfigOption.Type.LOCAL, true);
 
     private enum Mode {
         HTTP, CLOUD;
@@ -168,6 +171,7 @@ public class Solr6Index implements IndexProvider {
             .build();
 
     private static final Map<Geo, String> SPATIAL_PREDICATES = spatialPredicates();
+    private static boolean createSolrClientPerRequest;
 
     private final SolrClient solrClient;
     private final Configuration configuration;
@@ -178,6 +182,7 @@ public class Solr6Index implements IndexProvider {
     private final int batchSize;
     private final boolean waitSearcher;
     private final boolean kerberosEnabled;
+
 
     public Solr6Index(final Configuration config) throws BackendException {
         // Add Kerberos-enabled SolrHttpClientBuilder
@@ -203,23 +208,50 @@ public class Solr6Index implements IndexProvider {
         }
 
         solrClient = createSolrClient();
-
+        createSolrClientPerRequest = config.get(CREATE_SOLR_CLIENT_PER_REQUEST);
+        if(createSolrClientPerRequest) {
+            logger.info("A new Solr Client will be created for direct interation with SOLR.");
+        } else {
+            logger.info("Solr Client will be shared for direct interation with SOLR.");
+        }
         Solr6Index.instance = this;
     }
 
     public static SolrClient getSolrClient() {
-        return Solr6Index.instance != null ? Solr6Index.instance.createSolrClient() : null;
+        if (Solr6Index.instance != null) {
+            if (createSolrClientPerRequest) {
+                logger.debug("Creating a new Solr Client.");
+                return Solr6Index.instance.createSolrClient();
+            } else {
+                logger.debug("Returning the solr client owned by Solr6Index.");
+                return Solr6Index.instance.solrClient;
+            }
+        } else {
+            logger.debug(" No Solr6Index available. Will return null");
+            return null;
+        }
     }
 
     public static void releaseSolrClient(SolrClient solrClient) {
-        if (solrClient != null) {
-            try {
-                solrClient.close();
-            } catch (IOException excp) {
-                logger.warn("Failed to close SolrClient", excp);
+        if(createSolrClientPerRequest) {
+            if (solrClient != null) {
+                try {
+                    solrClient.close();
+
+                    if(logger.isDebugEnabled()) {
+                        logger.debug("Closed the solr client successfully.");
+                    }
+                } catch (IOException excp) {
+                    logger.warn("Failed to close SolrClient.", excp);
+                }
+            }
+        } else {
+            if(logger.isDebugEnabled()) {
+                logger.debug("Ignoring the closing of solr client as it is owned by Solr6Index.");
             }
         }
     }
+
     private SolrClient createSolrClient() {
         final ModifiableSolrParams clientParams = new ModifiableSolrParams();
         SolrClient solrClient = null;
@@ -1021,6 +1053,10 @@ public class Solr6Index implements IndexProvider {
         } else if (AttributeUtil.isDecimal(dataType)) {
             if (dataType.equals(Float.class)) postfix = "_f";
             else postfix = "_d";
+        } else if (dataType.equals(BigInteger.class)) {
+            postfix = "_bi";
+        } else if (dataType.equals(BigDecimal.class)) {
+            postfix = "_bd";
         } else if (dataType.equals(Geoshape.class)) {
             postfix = "_g";
         } else if (dataType.equals(Date.class) || dataType.equals(Instant.class)) {
@@ -1030,6 +1066,7 @@ public class Solr6Index implements IndexProvider {
         } else if (dataType.equals(UUID.class)) {
             postfix = "_uuid";
         } else throw new IllegalArgumentException("Unsupported data type ["+dataType+"] for field: " + key);
+
         if (keyInfo.getCardinality() == Cardinality.SET || keyInfo.getCardinality() == Cardinality.LIST) {
             postfix += "s";
         }

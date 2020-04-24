@@ -175,6 +175,21 @@ define(['require',
                     icon.parent('button').attr("data-original-title", "Default View");
                 }
                 panel.toggleClass('fullscreen-mode');
+                this.slideBarToggle(panel);
+            },
+            slideBarToggle: function(panel) {
+                var sideBarCheck = $(".container-fluid.view-container").hasClass('slide-in'),
+                    sideBarContainer = $(".container-fluid.view-container"),
+                    sideBarWrapper = $("#sidebar-wrapper,#page-wrapper");
+
+                sideBarWrapper.addClass("animate-me");
+                panel.hasClass('fullscreen-mode') ?
+                    sideBarCheck ? null : sideBarContainer.toggleClass("slide-in") :
+                    sideBarCheck ? sideBarContainer.toggleClass("slide-in") : null;
+                $("#sidebar-wrapper,.search-browse-box,#page-wrapper").removeAttr("style");
+                setTimeout(function() {
+                    sideBarWrapper.removeClass("animate-me");
+                }, 301);
             },
             onCheckUnwantedEntity: function(e) {
                 var data = $.extend(true, {}, this.lineageData);
@@ -228,6 +243,9 @@ define(['require',
                     skipDefaultError: true,
                     queryParam: queryParam,
                     success: function(data) {
+                        if (that.isDestroyed) {
+                            return;
+                        }
                         if (data.relations.length) {
                             that.lineageData = $.extend(true, {}, data);
                             that.relationshipMap = that.crateLineageRelationshipHashMap(data);
@@ -326,6 +344,7 @@ define(['require',
                             toolTipLabel: relationObj.displayText,
                             id: relationObj.guid,
                             isLineage: true,
+                            isIncomplete: relationObj.isIncomplete,
                             entityDef: this.getEntityDef(relationObj.typeName)
                         }, relationObj);
                         obj["serviceType"] = this.getServiceType({ typeName: relationObj.typeName, entityDef: obj.entityDef });
@@ -491,9 +510,11 @@ define(['require',
                     "translate(" + this.zoom.translate() + ")" +
                     "scale(" + this.zoom.scale() + ")"
                 );
-                LineageUtils.refreshGraphForIE({
-                    edgeEl: this.$('svg .edgePath')
-                });
+                if (platform.name === "IE") {
+                    LineageUtils.refreshGraphForIE({
+                        edgeEl: this.$('svg .edgePath')
+                    });
+                }
             },
             interpolateZoom: function(translate, scale, that, zoom) {
                 return d3.transition().duration(350).tween("zoom", function() {
@@ -556,6 +577,12 @@ define(['require',
                     if (currentNode) {
                         shapeSvg.attr("stroke", "#fb4200")
                     }
+                    if (node.isIncomplete === true) {
+                        parent.attr("class", "node isIncomplete show");
+                    } else {
+                        parent.attr("class", "node isIncomplete");
+                    }
+
                     parent.insert("defs")
                         .append("pattern")
                         .attr("x", "0%")
@@ -568,31 +595,27 @@ define(['require',
                         .attr("href", function(d) {
                             var that = this;
                             if (node) {
-                                // to check for IE-10
-                                var originLink = window.location.origin;
-                                if (platform.name === "IE") {
-                                    originLink = window.location.protocol + "//" + window.location.host;
-                                }
-                                var imageIconPath = Utils.getEntityIconPath({ entityData: node }),
-                                    imagePath = ((originLink + Utils.getBaseUrl(window.location.pathname)) + imageIconPath);
+                                var imageIconPath = Utils.getEntityIconPath({ entityData: node });
+
+                                shapeSvg.attr("data-iconpath", imageIconPath);
 
                                 var getImageData = function(options) {
                                     var imagePath = options.imagePath,
                                         ajaxOptions = {
                                             "url": imagePath,
                                             "method": "get",
-                                            "async": false,
+                                            "cache": true
                                         }
 
                                     if (platform.name !== "IE") {
                                         ajaxOptions["mimeType"] = "text/plain; charset=x-user-defined";
                                     }
+                                    shapeSvg.attr("data-iconpath", imagePath);
                                     $.ajax(ajaxOptions)
                                         .always(function(data, status, xhr) {
                                             if (data.status == 404) {
                                                 getImageData({
-                                                    "imagePath": Utils.getEntityIconPath({ entityData: node, errorUrl: imagePath }),
-                                                    "imageIconPath": imageIconPath
+                                                    "imagePath": Utils.getEntityIconPath({ entityData: node, errorUrl: imagePath })
                                                 });
                                             } else if (data) {
                                                 if (platform.name !== "IE") {
@@ -600,26 +623,16 @@ define(['require',
                                                 } else {
                                                     imageObject[imageIconPath] = imagePath;
                                                 }
+                                                d3.select(that).attr("xlink:href", imageObject[imageIconPath]);
+                                                if (imageIconPath !== shapeSvg.attr("data-iconpath")) {
+                                                    shapeSvg.attr("data-iconpathorigin", imageIconPath);
+                                                }
                                             }
                                         });
                                 }
-                                if (_.keys(imageObject).indexOf(imageIconPath) === -1) {
-                                    getImageData({
-                                        "imagePath": imagePath,
-                                        "imageIconPath": imageIconPath
-                                    });
-                                }
-
-                                if (_.isUndefined(imageObject[imageIconPath])) {
-                                    // before img success
-                                    imageObject[imageIconPath] = [d3.select(that)];
-                                } else if (_.isArray(imageObject[imageIconPath])) {
-                                    // before img success
-                                    imageObject[imageIconPath].push(d3.select(that));
-                                } else {
-                                    d3.select(that).attr("xlink:href", imageObject[imageIconPath]);
-                                    return imageObject[imageIconPath];
-                                }
+                                getImageData({
+                                    "imagePath": imageIconPath
+                                });
                             }
                         })
                         .attr("x", "4")
@@ -774,11 +787,18 @@ define(['require',
                             clearTimeout(waitForDoubleClick)
                             waitForDoubleClick = null;
                             tooltip.hide(d);
-                            Utils.setUrl({
-                                url: '#!/detailPage/' + d + '?tabActive=lineage',
-                                mergeBrowserUrl: false,
-                                trigger: true
-                            });
+                            if (that.guid == d) {
+                                Utils.notifyInfo({
+                                    html: true,
+                                    content: "You are already on " + "<b>" + that.entityName + "</b> detail page."
+                                });
+                            } else {
+                                Utils.setUrl({
+                                    url: '#!/detailPage/' + d + '?tabActive=lineage',
+                                    mergeBrowserUrl: false,
+                                    trigger: true
+                                });
+                            }
                         } else {
                             var currentEvent = d3.event
                             waitForDoubleClick = setTimeout(function() {
@@ -787,7 +807,7 @@ define(['require',
                                 $(el).find('circle').addClass('node-detail-highlight');
                                 that.updateRelationshipDetails({ guid: d });
                                 waitForDoubleClick = null;
-                            }, 150)
+                            }, 170)
                         }
                     });
 
@@ -854,10 +874,10 @@ define(['require',
                         } else if (that.filterObj.isDeletedEntityHideCheck && nodeData && nodeData.isDeleted) {
                             return
                         }
-                        typeStr += '<option value="' + obj.guid + '">' + obj.attributes.name + '</option>';
+                        typeStr += '<option value="' + obj.guid + '">' + obj.displayText + '</option>';
                     });
                 }
-                that.ui.lineageTypeSearch.html(typeStr);
+                this.ui.lineageTypeSearch.html(typeStr);
                 this.initilizelineageTypeSearch();
             },
             initilizelineageTypeSearch: function() {
@@ -975,6 +995,7 @@ define(['require',
                     }
                     $('.hidden-svg').html(svgClone);
                     $(svgClone).find('>g').attr("transform", "scale(" + scaleFactor + ")");
+                    $(svgClone).find("foreignObject").remove();
                     var canvasOffset = { x: 150, y: 150 },
                         setWidth = (svgClone.getBBox().width + (canvasOffset.x)),
                         setHeight = (svgClone.getBBox().height + (canvasOffset.y)),
@@ -1011,7 +1032,7 @@ define(['require',
                         try {
                             var a = document.createElement("a"),
                                 entityAttributes = that.entity && that.entity.attributes;
-                            a.download = ((entityAttributes && entityAttributes.qualifiedName) || "lineage_export") + ".png";
+                            a.download = ((entityAttributes && (entityAttributes.qualifiedName || entityAttributes.name) || "lineage_export") + ".png");
                             document.body.appendChild(a);
                             ctx.drawImage(img, 50, 50, canvas.width, canvas.height);
                             canvas.toBlob(function(blob) {

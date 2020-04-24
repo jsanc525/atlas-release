@@ -31,6 +31,10 @@ import java.util.Collection;
 
 import static org.apache.atlas.model.patches.AtlasPatch.PatchStatus.APPLIED;
 
+/**
+ * This patch handler installs free text request handlers for already running Atlas instances.
+ * --instances that were deployed with older versions.
+ */
 public class FreeTextRequestHandlerPatch extends AtlasPatchHandler {
     private static final Logger LOG = LoggerFactory.getLogger(FreeTextRequestHandlerPatch.class);
 

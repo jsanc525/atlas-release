@@ -20,10 +20,11 @@ package org.apache.atlas.web.rest;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasErrorCode;
 import org.apache.atlas.SortOrder;
+import org.apache.atlas.authorize.AtlasAuthorizationUtils;
 import org.apache.atlas.discovery.AtlasDiscoveryService;
+import org.apache.atlas.discovery.EntityDiscoveryService;
 import org.apache.atlas.exception.AtlasBaseException;
-import org.apache.atlas.model.discovery.AtlasSearchResult;
-import org.apache.atlas.model.discovery.SearchParameters;
+import org.apache.atlas.model.discovery.*;
 import org.apache.atlas.model.discovery.SearchParameters.FilterCriteria;
 import org.apache.atlas.model.profile.AtlasUserSavedSearch;
 import org.apache.atlas.repository.Constants;
@@ -72,12 +73,12 @@ public class DiscoveryREST {
     private final int                maxDslQueryLength;
 
     private final AtlasTypeRegistry     typeRegistry;
-    private final AtlasDiscoveryService atlasDiscoveryService;
+    private final AtlasDiscoveryService discoveryService;
 
     @Inject
-    public DiscoveryREST(AtlasTypeRegistry typeRegistry, AtlasDiscoveryService atlasDiscoveryService, Configuration configuration) {
+    public DiscoveryREST(AtlasTypeRegistry typeRegistry, AtlasDiscoveryService discoveryService, Configuration configuration) {
         this.typeRegistry           = typeRegistry;
-        this.atlasDiscoveryService  = atlasDiscoveryService;
+        this.discoveryService       = discoveryService;
         this.maxFullTextQueryLength = configuration.getInt(Constants.MAX_FULLTEXT_QUERY_STR_LENGTH, 4096);
         this.maxDslQueryLength      = configuration.getInt(Constants.MAX_DSL_QUERY_STR_LENGTH, 4096);
     }
@@ -121,9 +122,9 @@ public class DiscoveryREST {
                         + "," + classification + "," + limit + "," + offset + ")");
             }
 
-            String queryStr = atlasDiscoveryService.getDslQueryUsingTypeNameClassification(query, typeName, classification);
+            String queryStr = discoveryService.getDslQueryUsingTypeNameClassification(query, typeName, classification);
 
-            return atlasDiscoveryService.searchUsingDslQuery(queryStr, limit, offset);
+            return discoveryService.searchUsingDslQuery(queryStr, limit, offset);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -162,7 +163,7 @@ public class DiscoveryREST {
                         limit + "," + offset + ")");
             }
 
-            return atlasDiscoveryService.searchUsingFullTextQuery(query, excludeDeletedEntities, limit, offset);
+            return discoveryService.searchUsingFullTextQuery(query, excludeDeletedEntities, limit, offset);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -212,7 +213,7 @@ public class DiscoveryREST {
             searchParameters.setLimit(limit);
             searchParameters.setOffset(offset);
 
-            return atlasDiscoveryService.searchWithParameters(searchParameters);
+            return discoveryService.searchWithParameters(searchParameters);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -333,7 +334,7 @@ public class DiscoveryREST {
 
             validateSearchParameters(parameters);
 
-            return atlasDiscoveryService.searchWithParameters(parameters);
+            return discoveryService.searchWithParameters(parameters);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -374,7 +375,7 @@ public class DiscoveryREST {
                         ", " + relation + ", " + sortByAttribute + ", " + sortOrder + ", " + excludeDeletedEntities + ", " + ", " + limit + ", " + offset + ")");
             }
 
-            return atlasDiscoveryService.searchRelatedEntities(guid, relation, sortByAttribute, sortOrder, excludeDeletedEntities, limit, offset);
+            return discoveryService.searchRelatedEntities(guid, relation, sortByAttribute, sortOrder, excludeDeletedEntities, limit, offset);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -398,7 +399,7 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.addSavedSearch(userName=" + savedSearch.getOwnerName() + ", name=" + savedSearch.getName() + ", searchType=" + savedSearch.getSearchType() + ")");
             }
 
-            return atlasDiscoveryService.addSavedSearch(Servlets.getUserName(httpServletRequest), savedSearch);
+            return discoveryService.addSavedSearch(AtlasAuthorizationUtils.getCurrentUserName(), savedSearch);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -422,7 +423,7 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.updateSavedSearch(userName=" + savedSearch.getOwnerName() + ", name=" + savedSearch.getName() + ", searchType=" + savedSearch.getSearchType() + ")");
             }
 
-            return atlasDiscoveryService.updateSavedSearch(Servlets.getUserName(httpServletRequest), savedSearch);
+            return discoveryService.updateSavedSearch(AtlasAuthorizationUtils.getCurrentUserName(), savedSearch);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -449,7 +450,7 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.getSavedSearch(userName=" + userName + ", name=" + searchName + ")");
             }
 
-            return atlasDiscoveryService.getSavedSearchByName(Servlets.getUserName(httpServletRequest), userName, searchName);
+            return discoveryService.getSavedSearchByName(AtlasAuthorizationUtils.getCurrentUserName(), userName, searchName);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -473,7 +474,7 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.getSavedSearches(userName=" + userName + ")");
             }
 
-            return atlasDiscoveryService.getSavedSearches(Servlets.getUserName(httpServletRequest), userName);
+            return discoveryService.getSavedSearches(AtlasAuthorizationUtils.getCurrentUserName(), userName);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -494,7 +495,7 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.deleteSavedSearch(guid=" + guid + ")");
             }
 
-            atlasDiscoveryService.deleteSavedSearch(Servlets.getUserName(httpServletRequest), guid);
+            discoveryService.deleteSavedSearch(AtlasAuthorizationUtils.getCurrentUserName(), guid);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -524,7 +525,7 @@ public class DiscoveryREST {
                         "DiscoveryREST.executeSavedSearchByName(userName=" + userName + ", " + "name=" + searchName + ")");
             }
 
-            AtlasUserSavedSearch savedSearch = atlasDiscoveryService.getSavedSearchByName(Servlets.getUserName(httpServletRequest), userName, searchName);
+            AtlasUserSavedSearch savedSearch = discoveryService.getSavedSearchByName(AtlasAuthorizationUtils.getCurrentUserName(), userName, searchName);
 
             return executeSavedSearch(savedSearch);
         } finally {
@@ -551,9 +552,108 @@ public class DiscoveryREST {
                 perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.executeSavedSearchByGuid(" + searchGuid + ")");
             }
 
-            AtlasUserSavedSearch savedSearch = atlasDiscoveryService.getSavedSearchByGuid(Servlets.getUserName(httpServletRequest), searchGuid);
+            AtlasUserSavedSearch savedSearch = discoveryService.getSavedSearchByGuid(AtlasAuthorizationUtils.getCurrentUserName(), searchGuid);
 
             return executeSavedSearch(savedSearch);
+        } finally {
+            AtlasPerfTracer.log(perf);
+        }
+    }
+
+    /**
+     * Attribute based search for entities satisfying the search parameters
+     *@return Atlas search result
+     * @throws AtlasBaseException
+     * @HTTP 200 On successful search
+     * @HTTP 400 Tag/Entity doesn't exist or Tag/entity filter is present without tag/type name
+     */
+    @Path("/quick")
+    @GET
+    public AtlasQuickSearchResult quickSearch(@QueryParam("query")                  String  query,
+                                              @QueryParam("typeName")               String  typeName,
+                                              @QueryParam("excludeDeletedEntities") boolean excludeDeletedEntities,
+                                              @QueryParam("offset")                 int     offset,
+                                              @QueryParam("limit")                  int     limit) throws AtlasBaseException {
+
+
+
+        if (StringUtils.isNotEmpty(query) && query.length() > maxFullTextQueryLength) {
+            throw new AtlasBaseException(AtlasErrorCode.INVALID_QUERY_LENGTH, Constants.MAX_FULLTEXT_QUERY_STR_LENGTH);
+        }
+
+        AtlasPerfTracer perf = null;
+
+        try {
+            if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
+                perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.quick(" + query + "," +
+                        "excludeDeletedEntities:" + excludeDeletedEntities + "," + limit + "," + offset + ")");
+            }
+
+            QuickSearchParameters quickSearchParameters = new QuickSearchParameters(query,
+                                                                                    typeName,
+                                                                                    null,  // entityFilters
+                                                                                    false, // includeSubTypes
+                                                                                    excludeDeletedEntities,
+                                                                                    offset,
+                                                                                    limit,
+                                                                                    null); // attributes
+
+            return discoveryService.quickSearch(quickSearchParameters);
+        } finally {
+            AtlasPerfTracer.log(perf);
+        }
+    }
+
+    /**
+     * Attribute based search for entities satisfying the search parameters
+     *@return Atlas search result
+     * @throws AtlasBaseException
+     * @HTTP 200 On successful search
+     * @HTTP 400 Entity/attribute doesn't exist or entity filter is present without type name
+     */
+    @Path("/quick")
+    @POST
+    public AtlasQuickSearchResult quickSearch(QuickSearchParameters quickSearchParameters) throws AtlasBaseException {
+        AtlasPerfTracer perf = null;
+
+        try {
+            if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
+                perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.searchWithParameters(" + quickSearchParameters + ")");
+            }
+
+            if (quickSearchParameters.getLimit() < 0 || quickSearchParameters.getOffset() < 0) {
+                throw new AtlasBaseException(AtlasErrorCode.BAD_REQUEST, "Limit/offset should be non-negative");
+            }
+
+            if (StringUtils.isEmpty(quickSearchParameters.getTypeName()) &&
+                !isEmpty(quickSearchParameters.getEntityFilters())) {
+                throw new AtlasBaseException(AtlasErrorCode.BAD_REQUEST, "EntityFilters specified without Type name");
+            }
+
+            if (StringUtils.isEmpty(quickSearchParameters.getTypeName()) &&
+                StringUtils.isEmpty(quickSearchParameters.getQuery())){
+                throw new AtlasBaseException(AtlasErrorCode.INVALID_SEARCH_PARAMS);
+            }
+
+            validateSearchParameters(quickSearchParameters);
+
+            return discoveryService.quickSearch(quickSearchParameters);
+        } finally {
+            AtlasPerfTracer.log(perf);
+        }
+    }
+
+    @Path("suggestions")
+    @GET
+    public AtlasSuggestionsResult getSuggestions(@QueryParam("prefixString") String prefixString) throws AtlasBaseException {
+        AtlasPerfTracer perf = null;
+
+        try {
+            if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
+                perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.getSuggestions(" + prefixString + ")");
+            }
+
+            return discoveryService.getSuggestions(prefixString);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -568,11 +668,11 @@ public class DiscoveryREST {
         SearchParameters sp = savedSearch.getSearchParameters();
 
         if(savedSearch.getSearchType() == AtlasUserSavedSearch.SavedSearchType.ADVANCED) {
-            String dslQuery = atlasDiscoveryService.getDslQueryUsingTypeNameClassification(sp.getQuery(), sp.getTypeName(), sp.getClassification());
+            String dslQuery = discoveryService.getDslQueryUsingTypeNameClassification(sp.getQuery(), sp.getTypeName(), sp.getClassification());
 
-            return atlasDiscoveryService.searchUsingDslQuery(dslQuery, sp.getLimit(), sp.getOffset());
+            return discoveryService.searchUsingDslQuery(dslQuery, sp.getLimit(), sp.getOffset());
         } else {
-            return atlasDiscoveryService.searchWithParameters(sp);
+            return discoveryService.searchWithParameters(sp);
         }
     }
 
@@ -594,6 +694,12 @@ public class DiscoveryREST {
                 throw new AtlasBaseException(AtlasErrorCode.INVALID_QUERY_LENGTH, Constants.MAX_FULLTEXT_QUERY_STR_LENGTH);
             }
 
+        }
+    }
+
+    private void validateSearchParameters(QuickSearchParameters parameters) throws AtlasBaseException {
+        if (parameters != null) {
+            validateSearchParameters(EntityDiscoveryService.createSearchParameters(parameters));
         }
     }
 }

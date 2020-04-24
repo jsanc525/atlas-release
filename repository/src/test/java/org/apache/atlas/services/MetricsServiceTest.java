@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -227,10 +228,10 @@ public class MetricsServiceTest {
     private void processMessage(Instant instant) {
         clock.setInstant(instant);
 
-        metricsUtil.onNotificationProcessingComplete(++msgOffset, new AtlasMetricsUtil.NotificationStat(true, 1));
+        metricsUtil.onNotificationProcessingComplete("ATLAS_HOOK", 0, ++msgOffset, new AtlasMetricsUtil.NotificationStat(true, 1));
 
         for (int i = 0; i < 10; i++) {
-            metricsUtil.onNotificationProcessingComplete(msgOffset++, new AtlasMetricsUtil.NotificationStat(false, 1));
+            metricsUtil.onNotificationProcessingComplete("ATLAS_HOOK", 0, msgOffset++, new AtlasMetricsUtil.NotificationStat(false, 1));
         }
 
         clock.setInstant(null);
@@ -246,9 +247,8 @@ public class MetricsServiceTest {
         }
     }
 
-    public static ZipSource getZipSource(String fileName) throws IOException, AtlasBaseException {
-        FileInputStream fs = ZipFileResourceTestUtils.getFileInputStream(fileName);
-        return new ZipSource(fs);
+    public static InputStream getZipSource(String fileName) throws AtlasBaseException {
+        return ZipFileResourceTestUtils.getFileInputStream(fileName);
     }
 
     private static class TestClock extends Clock {

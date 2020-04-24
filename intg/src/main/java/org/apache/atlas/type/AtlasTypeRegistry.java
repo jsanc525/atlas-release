@@ -26,6 +26,7 @@ import org.apache.atlas.model.typedef.AtlasEnumDef;
 import org.apache.atlas.model.typedef.AtlasRelationshipDef;
 import org.apache.atlas.model.typedef.AtlasStructDef;
 import org.apache.atlas.model.typedef.AtlasTypesDef;
+import org.apache.atlas.type.AtlasStructType.AtlasAttribute;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -33,13 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,19 +52,22 @@ public class AtlasTypeRegistry {
     protected       RegistryData                   registryData;
     private   final TypeRegistryUpdateSynchronizer updateSynchronizer;
     private   final Set<String>                    missingRelationshipDefs;
+    private   final Map<String, String>            commonIndexFieldNameCache;
 
 
     public AtlasTypeRegistry() {
-        registryData            = new RegistryData();
-        updateSynchronizer      = new TypeRegistryUpdateSynchronizer(this);
-        missingRelationshipDefs = new HashSet<>();
+        registryData              = new RegistryData();
+        updateSynchronizer        = new TypeRegistryUpdateSynchronizer(this);
+        missingRelationshipDefs   = new HashSet<>();
+        commonIndexFieldNameCache = new HashMap<>();
     }
 
     // used only by AtlasTransientTypeRegistry
     protected AtlasTypeRegistry(AtlasTypeRegistry other) {
-        registryData            = new RegistryData();
-        updateSynchronizer      = other.updateSynchronizer;
-        missingRelationshipDefs = other.missingRelationshipDefs;
+        registryData              = new RegistryData();
+        updateSynchronizer        = other.updateSynchronizer;
+        missingRelationshipDefs   = other.missingRelationshipDefs;
+        commonIndexFieldNameCache = other.commonIndexFieldNameCache;
     }
 
     public Collection<String> getAllTypeNames() { return registryData.allTypes.getAllTypeNames(); }
@@ -238,6 +236,19 @@ public class AtlasTypeRegistry {
 
             missingRelationshipDefs.add(key);
         }
+    }
+
+    public void addIndexFieldName(String propertyName, String indexFieldName) {
+        commonIndexFieldNameCache.put(propertyName, indexFieldName);
+    }
+
+    /**
+     * retrieves the index field name for the common field passed in.
+     * @param propertyName the name of the common field.
+     * @return the index name for the common field passed in.
+     */
+    public String getIndexFieldName(String propertyName) {
+        return commonIndexFieldNameCache.get(propertyName);
     }
 
     static class RegistryData {
@@ -908,6 +919,23 @@ public class AtlasTypeRegistry {
                                 new Exception().fillInStackTrace());
                     } else if (typeRegistryUpdateLock.getHoldCount() == 1) {
                         if (ttr != null && commitUpdates) {
+                            // copy indexName for entity attributes from current typeRegistry to new one
+                            for (AtlasEntityType ttrEntityType : ttr.getAllEntityTypes()) {
+                                AtlasEntityType currEntityType = typeRegistry.getEntityTypeByName(ttrEntityType.getTypeName());
+
+                                if (currEntityType != null) { // ttrEntityType could be a new type introduced
+                                    for (AtlasAttribute attribute : ttrEntityType.getAllAttributes().values()) {
+                                        if (StringUtils.isEmpty(attribute.getIndexFieldName())) {
+                                            AtlasAttribute currAttribute = currEntityType.getAttribute(attribute.getName());
+
+                                            if (currAttribute != null) {
+                                                attribute.setIndexFieldName(currAttribute.getIndexFieldName());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             typeRegistry.registryData = ttr.registryData;
                         }
                     }
@@ -1163,4 +1191,5 @@ class TypeDefCache<T1 extends AtlasBaseTypeDef, T2 extends AtlasType> {
         typeDefNameMap.clear();
         typeNameMap.clear();
     }
+
 }

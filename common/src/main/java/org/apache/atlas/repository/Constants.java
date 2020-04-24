@@ -40,11 +40,15 @@ public final class Constants {
     public static final String RELATIONSHIP_GUID_PROPERTY_KEY   = encodePropertyKey(RELATIONSHIP_PROPERTY_KEY_PREFIX + GUID_PROPERTY_KEY);
     public static final String HISTORICAL_GUID_PROPERTY_KEY     = encodePropertyKey(INTERNAL_PROPERTY_KEY_PREFIX + "historicalGuids");
     public static final String FREETEXT_REQUEST_HANDLER = "/freetext";
+    public static final String TERMS_REQUEST_HANDLER = "/terms";
+
     /**
      * Entity type name property key.
      */
     public static final String ENTITY_TYPE_PROPERTY_KEY = encodePropertyKey(INTERNAL_PROPERTY_KEY_PREFIX + "typeName");
     public static final String TYPE_NAME_INTERNAL       = INTERNAL_PROPERTY_KEY_PREFIX + "internal";
+    public static final String ASSET_ENTITY_TYPE = "Asset";
+    public static final String OWNER_ATTRIBUTE   = "owner";
 
     /**
      * Entity type's super types property key.
@@ -129,6 +133,8 @@ public final class Constants {
 
     public static final String MODIFICATION_TIMESTAMP_PROPERTY_KEY = encodePropertyKey(INTERNAL_PROPERTY_KEY_PREFIX + "modificationTimestamp");
 
+    public static final String IS_INCOMPLETE_PROPERTY_KEY = encodePropertyKey(INTERNAL_PROPERTY_KEY_PREFIX + "isIncomplete");
+
     /**
      * search backing index name.
      */
@@ -185,9 +191,10 @@ public final class Constants {
      * replication attributes
      */
 
-    public static final String ATTR_NAME_REFERENCEABLE = "Referenceable.";
-    public static final String ATTR_NAME_REPLICATED_TO = "replicatedTo";
-    public static final String ATTR_NAME_REPLICATED_FROM = "replicatedFrom";
+    public static final String  ATTR_NAME_REFERENCEABLE   = "Referenceable.";
+    public static final String  ATTR_NAME_REPLICATED_TO   = "replicatedTo";
+    public static final String  ATTR_NAME_REPLICATED_FROM = "replicatedFrom";
+    public static final Integer INCOMPLETE_ENTITY_VALUE   = Integer.valueOf(1);
 
     private Constants() {
     }

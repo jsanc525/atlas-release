@@ -55,8 +55,11 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.*;
 
+import static java.lang.Boolean.FALSE;
 import static org.apache.atlas.model.instance.EntityMutations.EntityOperation.DELETE;
 import static org.apache.atlas.model.instance.EntityMutations.EntityOperation.UPDATE;
+import static org.apache.atlas.repository.Constants.IS_INCOMPLETE_PROPERTY_KEY;
+import static org.apache.atlas.repository.graph.GraphHelper.isEntityIncomplete;
 
 
 @Component
@@ -544,6 +547,12 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
             LOG.debug("Updating classifications={} for entity={}", classifications, guid);
         }
 
+        AtlasPerfTracer perf = null;
+
+        if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
+            AtlasPerfTracer.getPerfTracer(PERF_LOG, "AtlasEntityStoreV2.updateClassification()");
+        }
+
         if (StringUtils.isEmpty(guid)) {
             throw new AtlasBaseException(AtlasErrorCode.INVALID_PARAMETERS, "Guid not specified");
         }
@@ -575,6 +584,8 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
         }
 
         entityGraphMapper.updateClassifications(context, guid, classifications);
+
+        AtlasPerfTracer.log(perf);
     }
 
     @Override
@@ -875,7 +886,7 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
     private EntityMutationContext preCreateOrUpdate(EntityStream entityStream, EntityGraphMapper entityGraphMapper, boolean isPartialUpdate) throws AtlasBaseException {
         MetricRecorder metric = RequestContext.get().startMetricRecord("preCreateOrUpdate");
 
-        EntityGraphDiscovery        graphDiscoverer  = new AtlasEntityGraphDiscoveryV2(typeRegistry, entityStream);
+        EntityGraphDiscovery        graphDiscoverer  = new AtlasEntityGraphDiscoveryV2(typeRegistry, entityStream, entityGraphMapper);
         EntityGraphDiscoveryContext discoveryContext = graphDiscoverer.discoverEntities();
         EntityMutationContext       context          = new EntityMutationContext(discoveryContext);
         RequestContext              requestContext   = RequestContext.get();
@@ -897,6 +908,13 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
                 if (vertex != null) {
                     if (!isPartialUpdate) {
                         graphDiscoverer.validateAndNormalize(entity);
+
+                        // change entity 'isInComplete' to 'false' during full update
+                        if (isEntityIncomplete(vertex)) {
+                            vertex.removeProperty(IS_INCOMPLETE_PROPERTY_KEY);
+
+                            entity.setIsIncomplete(FALSE);
+                        }
                     } else {
                         graphDiscoverer.validateAndNormalizeForUpdate(entity);
                     }
@@ -947,9 +965,9 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
 
                             context.addEntityToDelete(vertex);
                         } else if (currStatus == Status.DELETED && newStatus == Status.ACTIVE) {
-                            LOG.warn("attempt to activate deleted entity (guid={}). Ignored", guid);
-
-                            entity.setStatus(currStatus);
+                            LOG.warn("Import is attempting to activate deleted entity (guid={}).", guid);
+                            entityGraphMapper.importActivateEntity(vertex, entity);
+                            context.addCreated(guid, entity, entityType, vertex);
                         }
                     }
 
@@ -983,7 +1001,7 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
     private AtlasObjectId getAtlasObjectId(AtlasEntity entity) {
         AtlasObjectId ret = entityRetriever.toAtlasObjectId(entity);
 
-        if (ret != null && MapUtils.isNotEmpty(ret.getUniqueAttributes())) {
+        if (ret != null && !RequestContext.get().isImportInProgress() && MapUtils.isNotEmpty(ret.getUniqueAttributes())) {
             // if uniqueAttributes is not empty, reset guid to null.
             ret.setGuid(null);
         }
