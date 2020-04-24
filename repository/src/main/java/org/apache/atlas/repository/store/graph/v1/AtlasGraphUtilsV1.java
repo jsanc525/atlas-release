@@ -43,6 +43,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -90,7 +92,11 @@ public class AtlasGraphUtilsV1 {
     }
 
     public static String getIdFromVertex(AtlasVertex vertex) {
-        return vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
+        String property = vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
+        if(Strings.isNullOrEmpty(property)) {
+            LOG.info("AtlasGraphUtilsV1.getIdFromVertex() --> Value for key : {} was found null : {}.", Constants.GUID_PROPERTY_KEY, property);
+        }
+        return property;
     }
 
     public static String getTypeName(AtlasVertex instanceVertex) {

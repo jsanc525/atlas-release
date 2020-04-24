@@ -65,6 +65,9 @@ public class FullTextMapper {
         } else {
             typedReference =
                     graphToTypedInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
+            if (typedReference == null) {
+                LOG.warn(" typedReference found null for guid {} , for AtlasVertex {} ", guid, GraphHelper.getVertexDetailsString(instanceVertex));
+            }
             context.cache(typedReference);
 
             if (LOG.isDebugEnabled()) {

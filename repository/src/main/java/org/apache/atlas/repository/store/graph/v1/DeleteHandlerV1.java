@@ -92,6 +92,12 @@ public abstract class DeleteHandlerV1 {
 
         for (AtlasVertex instanceVertex : instanceVertices) {
             String              guid = AtlasGraphUtilsV1.getIdFromVertex(instanceVertex);
+
+            if( guid == null ) {
+                LOG.warn(" guid is null for vertex {}",  GraphHelper.getVertexDetailsString(instanceVertex));
+                continue;
+            }
+
             AtlasEntity.Status state = AtlasGraphUtilsV1.getState(instanceVertex);
 
             if (state == AtlasEntity.Status.DELETED) {
@@ -113,6 +119,12 @@ public abstract class DeleteHandlerV1 {
             // Record all deletion candidate GUIDs in RequestContext
             // and gather deletion candidate vertices.
             for (GraphHelper.VertexInfo vertexInfo : compositeVertices) {
+
+                if (vertexInfo.getTypeName() == null) {
+                    LOG.warn(" vertexInfo.getTypeName() found null for vetex id  {} " , GraphHelper.getVertexDetailsString(vertexInfo.getVertex()));
+                    continue;
+                }
+
                 AtlasEntityType     entityType = typeRegistry.getEntityTypeByName(vertexInfo.getTypeName());
                 AtlasEntity         entity     = entityGraphRetriever.toAtlasEntity(vertexInfo.getVertex());
                 Map<String, Object> attributes = null;
@@ -177,6 +189,10 @@ public abstract class DeleteHandlerV1 {
             String typeName = GraphHelper.getTypeName(vertex);
             String guid = GraphHelper.getGuid(vertex);
 
+            if (typeName == null) {
+                LOG.warn(" typeName found null for vertex {} ", GraphHelper.getVertexDetailsString(entityVertex));
+                continue;
+            }
             result.add(new GraphHelper.VertexInfo(guid, vertex, typeName));
             AtlasEntityType entityType = typeRegistry.getEntityTypeByName(typeName);
 
@@ -324,6 +340,10 @@ public abstract class DeleteHandlerV1 {
         LOG.debug("Deleting {}", string(instanceVertex));
         String typeName = GraphHelper.getTypeName(instanceVertex);
 
+        if (typeName == null) {
+            LOG.warn("typeName is null in  Vertex :: {}", GraphHelper.getVertexDetailsString(instanceVertex));
+            return;
+        }
 
         AtlasType parentType = typeRegistry.getType(typeName);
 
@@ -437,6 +457,11 @@ public abstract class DeleteHandlerV1 {
             attribute.getName());
         String typeName = GraphHelper.getTypeName(outVertex);
         String outId = GraphHelper.getGuid(outVertex);
+
+        if (typeName == null) {
+            LOG.warn("typeName found null in outVertex {} to inVertex {} with attribute name {}", string(outVertex), string(inVertex), attribute.getName());
+            return;
+        }
 
         AtlasObjectId objId = new AtlasObjectId(outId, typeName);
         AtlasEntity.Status state = AtlasGraphUtilsV1.getState(outVertex);

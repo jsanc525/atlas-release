@@ -174,7 +174,8 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         }
 
         RequestContext context = RequestContext.get();
-        ITypedReferenceableInstance[] result = new ITypedReferenceableInstance[guids.length];
+       // ITypedReferenceableInstance[] result = new ITypedReferenceableInstance[guids.length];
+        List<ITypedReferenceableInstance> result = new ArrayList<ITypedReferenceableInstance>();
 
         // Map of the guids of instances not in the cache to their index(es) in the result.
         // This is used to put the loaded instances into the location(s) corresponding
@@ -188,7 +189,8 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             // First, check the cache.
             ITypedReferenceableInstance cached = context.getInstanceV1(guid);
             if (cached != null) {
-                result[i] = cached;
+               // result[i] = cached;
+                result.add(cached);
             } else {
                 Set<Integer> indices = uncachedGuids.get(guid);
                 if (indices == null) {
@@ -218,14 +220,17 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         for (String guid : guidsToFetch) {
             try {
                 ITypedReferenceableInstance entity = graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertices.get(guid));
-                for(int index : uncachedGuids.get(guid)) {
-                    result[index] = entity;
-                }
+              //  for(int index : uncachedGuids.get(guid)) {
+                   // result[index] = entity;
+                    if(entity!=null) {
+                        result.add(entity);
+                    }
+                //}
             } catch (AtlasException e) {
                 throw new RepositoryException(e);
             }
         }
-        return Arrays.asList(result);
+        return result; //Arrays.asList(result);
     }
 
     @Override

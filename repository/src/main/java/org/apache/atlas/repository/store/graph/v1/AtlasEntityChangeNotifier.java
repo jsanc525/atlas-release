@@ -196,7 +196,12 @@ public class AtlasEntityChangeNotifier {
             }
         } else {
             for (AtlasEntityHeader entityHeader : entityHeaders) {
-                ret.add(instanceConverter.getITypedReferenceable(entityHeader.getGuid()));
+                try {
+                    ret.add(instanceConverter.getITypedReferenceable(entityHeader.getGuid()));
+                } catch (Exception e) {
+                    LOG.info("AtlasEntityHeader guid = {} headers = {}", entityHeader.getGuid(),  entityHeader);
+                    LOG.warn("Exception caught in AtlasEntityChangeNotifier.toITypedReferenceable ", e.getMessage());
+                }
             }
         }
 

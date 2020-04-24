@@ -18,6 +18,7 @@
 package org.apache.atlas.repository.store.graph.v1;
 
 
+import com.google.common.base.Strings;
 import org.apache.atlas.AtlasConfiguration;
 import org.apache.atlas.AtlasErrorCode;
 import org.apache.atlas.AtlasException;
@@ -57,6 +58,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
 
 import javax.inject.Inject;
 import java.util.*;
@@ -884,7 +886,15 @@ public class EntityGraphMapper {
         String newEntityId = AtlasGraphUtilsV1.getIdFromVertex(entityVertex);
 
         AtlasEdge newEdge = currentEdge;
-        if (!currentEntityId.equals(newEntityId)) {
+        if(Strings.isNullOrEmpty(currentEntityId) ) {
+            LOG.warn("GUID {} is null in current Vertex :: {}", currentEntityId, GraphHelper.getVertexDetailsString(currentVertex));
+        }
+
+        if(Strings.isNullOrEmpty(newEntityId)) {
+            LOG.warn("GUID {} is null in new Vertex :: {}", newEntityId, GraphHelper.getVertexDetailsString(entityVertex));
+        }
+
+        if (! Strings.isNullOrEmpty(currentEntityId) && !currentEntityId.equals(newEntityId)) {
             // add an edge to the class vertex from the instance
             if (entityVertex != null) {
                 try {

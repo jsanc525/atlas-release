@@ -57,6 +57,7 @@ import org.apache.atlas.util.IndexedInstance;
 import org.apache.atlas.utils.ParamChecker;
 import org.apache.commons.collections.CollectionUtils;
 import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +149,7 @@ public final class GraphHelper {
             LOG.debug("Creating AtlasVertex for type {} id {}", typeName,
                       typedInstanceId != null ? typedInstanceId._getId() : null);
         }
+
 
         final AtlasVertex vertexWithoutIdentity = graph.addVertex();
 
@@ -503,7 +505,9 @@ public final class GraphHelper {
         ArrayList<String> traits = new ArrayList<>();
         Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
         for(String value : propertyValues) {
-            traits.add(value);
+            if(value!=null) {
+                traits.add(value);
+            }
         }
         return traits;
     }
@@ -991,6 +995,29 @@ public final class GraphHelper {
 
         return String.format("vertex[id=%s type=%s guid=%s]", vertex.getIdForDisplay(), getTypeName(vertex),
                 getGuid(vertex));
+    }
+
+    public static String getVertexDetailsString(AtlasVertex<?,?> vertex) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("vertex[").append("id=").append(vertex.getIdForDisplay());
+
+        Collection<? extends String> propertyKeys = vertex.getPropertyKeys();
+
+        if (CollectionUtils.isNotEmpty(propertyKeys)) {
+            Set<String> keys = new HashSet<String>();
+            for (String propertyKey : propertyKeys) {
+                keys.add(propertyKey);
+            }
+            try {
+                JSONObject propertiesJson = vertex.toJson(keys);
+                sb.append(" properties=").append(propertiesJson.toString());
+            }  catch (Exception excp) {
+                LOG.warn("failed to get vertex properties", excp);
+            }
+        } else {
+            sb.append(" properties=").append("{}");
+        }
+        return sb.toString();
     }
 
 

@@ -84,6 +84,12 @@ public final class GraphToTypedInstanceMapper {
         }
 
         String typeName = AtlasGraphUtilsV1.getEncodedProperty(instanceVertex, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class);
+
+        if (typeName == null) {
+            LOG.warn("typeName is null in current Vertex :: {}", GraphHelper.getVertexDetailsString(instanceVertex));
+            return null;
+        }
+
         List<String> traits = GraphHelper.getTraitNames(instanceVertex);
         String state = GraphHelper.getStateAsString(instanceVertex);
         String createdBy = GraphHelper.getCreatedByAsString(instanceVertex);
@@ -206,6 +212,11 @@ public final class GraphToTypedInstanceMapper {
         if (GraphHelper.elementExists(edge)) {
             final AtlasVertex referenceVertex = edge.getInVertex();
             final String guid = AtlasGraphUtilsV1.getEncodedProperty(referenceVertex, Constants.GUID_PROPERTY_KEY, String.class);
+
+            if(guid == null ){
+                LOG.warn("guid is null in referenceVertex :: {}", GraphHelper.getVertexDetailsString(referenceVertex));
+                return null;
+            }
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel, guid);
