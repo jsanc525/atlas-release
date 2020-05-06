@@ -1720,7 +1720,8 @@ public class EntityGraphMapper {
 
         traitNames.remove(classificationName);
 
-        updateTraitNamesProperty(entityVertex, traitNames);
+        // update 'TRAIT_NAMES_PROPERTY_KEY' property
+        entityVertex.removePropertyValue(TRAIT_NAMES_PROPERTY_KEY, classificationName);
 
         updateModificationMetadata(entityVertex);
 
@@ -1959,16 +1960,6 @@ public class EntityGraphMapper {
         if (CollectionUtils.isNotEmpty(traitNames)) {
             for (String traitName : traitNames) {
                 deleteClassification(guid, traitName);
-            }
-        }
-    }
-
-    private void updateTraitNamesProperty(AtlasVertex entityVertex, List<String> traitNames) {
-        if (entityVertex != null) {
-            entityVertex.removeProperty(TRAIT_NAMES_PROPERTY_KEY);
-
-            for (String traitName : traitNames) {
-                AtlasGraphUtilsV2.addEncodedProperty(entityVertex, TRAIT_NAMES_PROPERTY_KEY, traitName);
             }
         }
     }

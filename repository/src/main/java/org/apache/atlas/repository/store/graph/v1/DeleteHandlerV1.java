@@ -988,15 +988,11 @@ public abstract class DeleteHandlerV1 {
 
     private void removeFromPropagatedTraitNames(AtlasVertex entityVertex, String classificationName) {
         if (entityVertex != null && StringUtils.isNotEmpty(classificationName)) {
-            List<String> propagatedTraitNames = getTraitNames(entityVertex, true);
-
-            propagatedTraitNames.remove(classificationName);
-
-            entityVertex.removeProperty(PROPAGATED_TRAIT_NAMES_PROPERTY_KEY);
-
-            for (String propagatedTraitName : propagatedTraitNames) {
-                addToPropagatedTraitNames(entityVertex, propagatedTraitName);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Removing from property: {} value: {} in vertex: {}", PROPAGATED_TRAIT_NAMES_PROPERTY_KEY, classificationName, string(entityVertex));
             }
+
+            entityVertex.removePropertyValue(PROPAGATED_TRAIT_NAMES_PROPERTY_KEY, classificationName);
         }
     }
 
