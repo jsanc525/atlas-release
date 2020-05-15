@@ -17,6 +17,7 @@
  */
 package org.apache.atlas.repository.graphdb;
 
+import org.apache.atlas.AtlasException;
 import org.apache.atlas.exception.AtlasBaseException;
 import org.apache.atlas.groovy.GroovyExpression;
 import org.apache.atlas.type.AtlasType;
