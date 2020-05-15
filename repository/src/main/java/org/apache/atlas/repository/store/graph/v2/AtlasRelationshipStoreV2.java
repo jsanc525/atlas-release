@@ -38,6 +38,7 @@ import org.apache.atlas.model.typedef.AtlasRelationshipDef.PropagateTags;
 import org.apache.atlas.model.typedef.AtlasRelationshipEndDef;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphHelper;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
@@ -781,7 +782,7 @@ public class AtlasRelationshipStoreV2 implements AtlasRelationshipStore {
         AtlasEdge ret = null;
 
         if (toVertex.hasEdges(AtlasEdgeDirection.IN, relationshipLabel) && fromVertex.hasEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
-            ret = graph.getEdgeBetweenVertices(fromVertex, toVertex, relationshipLabel);
+            ret = AtlasGraphProvider.getGraphInstance().getEdgeBetweenVertices(fromVertex, toVertex, relationshipLabel);
         }
 
         RequestContext.get().endMetricRecord(metric);
