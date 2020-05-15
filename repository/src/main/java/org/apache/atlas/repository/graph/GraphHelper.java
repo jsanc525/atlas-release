@@ -35,6 +35,7 @@ import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
 import org.apache.atlas.repository.store.graph.v2.AtlasGraphUtilsV2;
 import org.apache.atlas.type.AtlasArrayType;
 import org.apache.atlas.type.AtlasMapType;
+import org.apache.atlas.util.AtlasGremlinQueryProvider;
 import org.apache.atlas.utils.AtlasPerfMetrics;
 import org.apache.atlas.v1.model.instance.Id;
 import org.apache.atlas.v1.model.instance.Referenceable;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.apache.atlas.model.instance.AtlasEntity.Status.ACTIVE;
 import static org.apache.atlas.model.instance.AtlasEntity.Status.DELETED;
@@ -240,21 +242,18 @@ public final class GraphHelper {
     }
 
     public AtlasEdge getOrCreateEdge(AtlasVertex outVertex, AtlasVertex inVertex, String edgeLabel) throws RepositoryException {
+        AtlasPerfMetrics.MetricRecorder metric = RequestContext.get().startMetricRecord("getOrCreateEdge");
+
         for (int numRetries = 0; numRetries < maxRetries; numRetries++) {
             try {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Running edge creation attempt {}", numRetries);
                 }
 
-                Iterator<AtlasEdge> edges = getAdjacentEdgesByLabel(inVertex, AtlasEdgeDirection.IN, edgeLabel);
-
-                while (edges.hasNext()) {
-                    AtlasEdge edge = edges.next();
-                    if (edge.getOutVertex().getId().equals(outVertex.getId())) {
-                        Id.EntityState edgeState = getState(edge);
-                        if (edgeState == null || edgeState == Id.EntityState.ACTIVE) {
-                            return edge;
-                        }
+                if (inVertex.hasEdges(AtlasEdgeDirection.IN, edgeLabel) && outVertex.hasEdges(AtlasEdgeDirection.OUT, edgeLabel)) {
+                    AtlasEdge edge = graph.getEdgeBetweenVertices(outVertex, inVertex, edgeLabel);
+                    if (edge != null) {
+                        return edge;
                     }
                 }
 
@@ -276,6 +275,8 @@ public final class GraphHelper {
                 }
             }
         }
+
+        RequestContext.get().endMetricRecord(metric);
         return null;
     }
 
