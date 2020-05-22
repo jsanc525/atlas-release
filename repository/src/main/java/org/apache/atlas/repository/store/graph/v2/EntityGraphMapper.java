@@ -253,12 +253,14 @@ public class EntityGraphMapper {
 
                 mapAttributes(createdEntity, entityType, vertex, CREATE, context);
 
-                resp.addEntity(CREATE, constructHeader(createdEntity, entityType, vertex));
+                resp.addEntity(CREATE, constructHeader(createdEntity, vertex));
                 addClassifications(context, guid, createdEntity.getClassifications());
 
                 reqContext.cache(createdEntity);
             }
         }
+
+        EntityOperation updateType = isPartialUpdate ? PARTIAL_UPDATE : UPDATE;
 
         if (CollectionUtils.isNotEmpty(updatedEntities)) {
             for (AtlasEntity updatedEntity : updatedEntities) {
@@ -270,11 +272,7 @@ public class EntityGraphMapper {
 
                 mapAttributes(updatedEntity, entityType, vertex, UPDATE, context);
 
-                if (isPartialUpdate) {
-                    resp.addEntity(PARTIAL_UPDATE, constructHeader(updatedEntity, entityType, vertex));
-                } else {
-                    resp.addEntity(UPDATE, constructHeader(updatedEntity, entityType, vertex));
-                }
+                resp.addEntity(updateType, constructHeader(updatedEntity, vertex));
 
                 if (replaceClassifications) {
                     deleteClassifications(guid);
@@ -1549,15 +1547,10 @@ public class EntityGraphMapper {
         }
     }
 
-    private AtlasEntityHeader constructHeader(AtlasEntity entity, final AtlasEntityType type, AtlasVertex vertex) {
-        AtlasEntityHeader header = new AtlasEntityHeader(entity.getTypeName());
-
-        header.setGuid(getIdFromVertex(vertex));
-        header.setStatus(entity.getStatus());
-        header.setIsIncomplete(entity.getIsIncomplete());
-
-        for (AtlasAttribute attribute : type.getUniqAttributes().values()) {
-            header.setAttribute(attribute.getName(), entity.getAttribute(attribute.getName()));
+    private AtlasEntityHeader constructHeader(AtlasEntity entity, AtlasVertex vertex) throws AtlasBaseException {
+        AtlasEntityHeader header = entityRetriever.toAtlasEntityHeaderWithClassifications(vertex);
+        if (entity.getClassifications() == null) {
+            entity.setClassifications(header.getClassifications());
         }
 
         return header;
