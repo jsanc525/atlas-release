@@ -355,3 +355,4 @@ ATLAS-2442:- Fix for read-only permission to allow read entity when http method 
 HOTFIX-1862 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
 ATLAS-2310:- Fix URL encoding incase of HA in passive node which caused wrong redirection url. (bpgergo via nixonrodrigues).
 HOTFIX-3685 RELENG-7419 lock npm grunt 1.0.4 to fix compile failure
+HOTFIX-3685 RELENG-10438 maven-shade-plugin changed version from 2.4.3 to 3.2.0
