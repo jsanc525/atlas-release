@@ -351,3 +351,4 @@ BUG-77446: fix Atlas hook to resolve Hive service check failure with NoClassDefF
 BUG-77993: upgrade frontend-maven-plugin to latest
 HOTFIX-1824 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
 HOTFIX-3304 RELENG-7419 lock npm grunt 1.0.4 to fix compile failure
+HOTFIX-3304 RELENG-10438 maven-shade-plugin changed version from 2.4.3 to 3.2.0
