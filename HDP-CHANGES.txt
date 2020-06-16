@@ -82,3 +82,4 @@ BUG-77446: fix Atlas hook to resolve Hive service check failure with NoClassDefF
 
 BUG-77993: upgrade frontend-maven-plugin to latest
 HOTFIX-3386 ATLAS-2145: Build failure in atlas-dashboardv2 due to js-beautify issue
+HOTFIX-3386 RELENG-10438 maven-shade-plugin changed version from 2.4.3 to 3.2.0
