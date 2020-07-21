@@ -45,6 +45,10 @@ define(['require'], function(require) {
         STATUS_DELETED: true
     }
 
+    Enums.isEntityPurged = {
+        PURGED: true
+    }
+
     Enums.lineageUrlType = {
         INPUT: 'inputs',
         OUTPUT: 'outputs',
@@ -185,7 +189,7 @@ define(['require'], function(require) {
             "totalDeletes": "number",
             "totalFailed": "number",
             "totalUpdates": "number",
-            "topicOffsets":"number"
+            "topicOffsets": "number"
         }
     };
     return Enums;
