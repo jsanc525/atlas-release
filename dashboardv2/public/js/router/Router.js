@@ -92,11 +92,18 @@ define([
         renderViewIfNotExists: function(options) {
             var view = options.view,
                 render = options.render,
+                viewName = options.viewName,
                 manualRender = options.manualRender;
             if (!view.currentView) {
-                if (render) view.show(options.render());
+                if (render) view.show(options.render(options));
+            } else if (manualRender && viewName) {
+                if (viewName === view.currentView._viewName) {
+                    options.manualRender(options);
+                } else {
+                    if (render) view.show(options.render(options));
+                }
             } else {
-                if (manualRender) options.manualRender();
+                if (manualRender) options.manualRender(options);
             }
         },
 
@@ -134,14 +141,9 @@ define([
         detailPage: function(id) {
             var that = this;
             if (id) {
-                require([
-                    'views/site/Header',
-                    'views/detail_page/DetailPageLayoutView',
-                    'views/site/SideNavLayoutView',
-                    'collection/VEntityList'
-                ], function(Header, DetailPageLayoutView, SideNavLayoutView, VEntityList) {
-                    this.entityCollection = new VEntityList([], {});
-                    var paramObj = Utils.getUrlState.getQueryParams();
+                require(["views/site/Header", "views/detail_page/DetailPageLayoutView", "views/site/SideNavLayoutView"], function(Header, DetailPageLayoutView, SideNavLayoutView) {
+                    var paramObj = Utils.getUrlState.getQueryParams(),
+                        options = _.extend({}, that.preFetchedCollectionLists, that.sharedObj, that.ventObj);
                     that.renderViewIfNotExists(that.getHeaderOptions(Header));
                     that.renderViewIfNotExists({
                         view: App.rSideNav,
@@ -149,18 +151,21 @@ define([
                             this.view.currentView.selectTab();
                         },
                         render: function() {
-                            return new SideNavLayoutView(
-                                _.extend({}, that.preFetchedCollectionLists, that.sharedObj)
-                            );
+                            return new SideNavLayoutView(options);
                         }
                     });
-                    App.rNContent.show(new DetailPageLayoutView(_.extend({
-                        'collection': this.entityCollection,
-                        'id': id,
-                        'value': paramObj
-                    }, that.preFetchedCollectionLists, that.sharedObj)));
-                    this.entityCollection.url = UrlLinks.entitiesApiUrl({ guid: id, minExtInfo: true });
-                    this.entityCollection.fetch({ reset: true });
+
+                    var dOptions = _.extend({ id: id, value: paramObj }, options);
+                    that.renderViewIfNotExists({
+                        view: App.rNContent,
+                        viewName: "DetailPageLayoutView",
+                        manualRender: function() {
+                            this.view.currentView.manualRender(dOptions);
+                        },
+                        render: function() {
+                            return new DetailPageLayoutView(dOptions);
+                        }
+                    });
                 });
             }
         },
