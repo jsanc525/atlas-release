@@ -36,6 +36,7 @@ import org.apache.atlas.repository.store.graph.AtlasEntityStore;
 import org.apache.atlas.repository.store.graph.BulkImporter;
 import org.apache.atlas.type.AtlasEntityType;
 import org.apache.atlas.type.AtlasTypeRegistry;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,7 @@ public class BulkImporterImpl implements BulkImporter {
                     }
 
                     if (attempt == 0) {
-                        updateVertexGuid(entity);
+                        updateVertexGuid(entityWithExtInfo);
                     } else {
                         LOG.error("Guid update failed: {}", entityWithExtInfo.getEntity().getGuid());
                         throw e;
@@ -145,6 +146,17 @@ public class BulkImporterImpl implements BulkImporter {
         LOG.info("bulkImport(): done. Total number of entities (including referred entities) imported: {}", processedGuids.size());
 
         return ret;
+    }
+
+    @GraphTransaction
+    public void updateVertexGuid(AtlasEntityWithExtInfo entityWithExtInfo) {
+        updateVertexGuid(entityWithExtInfo.getEntity());
+        if (MapUtils.isEmpty(entityWithExtInfo.getReferredEntities())) {
+            return;
+        }
+        for (AtlasEntity entity : entityWithExtInfo.getReferredEntities().values()) {
+            updateVertexGuid(entity);
+        }
     }
 
     @GraphTransaction
