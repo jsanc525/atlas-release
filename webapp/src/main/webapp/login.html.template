@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 -->
-<% response.setHeader("X-Frame-Options", "DENY"); %>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
@@ -28,8 +27,8 @@ Redirect();
 </script>
 <![endif]-->
 <!--[if gt IE 7]>
-    <script src="js/external_lib/es5-shim.min.js"></script>
-    <script src="js/external_lib/respond.min.js"></script>
+<script src="js/external_lib/es5-shim.min.js"></script>
+<script src="js/external_lib/respond.min.js"></script>
 <![endif]-->
 <!--[if gt IE 8]><!-->
 <html class="no-js">
