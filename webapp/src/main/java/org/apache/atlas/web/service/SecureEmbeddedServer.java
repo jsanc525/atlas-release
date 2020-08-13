@@ -68,7 +68,7 @@ public class SecureEmbeddedServer extends EmbeddedServer {
     protected Connector getConnector(String host, int port) throws IOException {
         org.apache.commons.configuration.Configuration config = getConfiguration();
 
-        SslContextFactory sslContextFactory = new SslContextFactory();
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
         sslContextFactory.setKeyStorePath(config.getString(KEYSTORE_FILE_KEY,
                 System.getProperty(KEYSTORE_FILE_KEY, DEFAULT_KEYSTORE_FILE_LOCATION)));
         sslContextFactory.setKeyStorePassword(getPassword(config, KEYSTORE_PASSWORD_KEY));
