@@ -244,7 +244,7 @@ define(['require',
 
     // For adding tooltip globally
     $('body').tooltip({
-        selector: '[title]',
+        selector: '[title]:not(".select2-selection__choice,.select2-selection__rendered")',
         placement: 'bottom',
         container: 'body'
     });
