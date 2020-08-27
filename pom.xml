@@ -660,13 +660,17 @@
         <kafka.version>1.0.0</kafka.version>
         <jsr.version>1.1</jsr.version>
         <elasticsearch.version>5.6.4</elasticsearch.version>
+
+        <janus.version>0.4.1</janus.version>
+        <tinkerpop.version>3.4.4</tinkerpop.version>
+        <lucene-solr.version>7.3.0</lucene-solr.version>
+
         <kafka.scala.binary.version>2.11</kafka.scala.binary.version>
         <curator.version>4.0.1</curator.version>
         <zookeeper.version>3.4.6.3.0.0.0-SNAPSHOT</zookeeper.version>
         <hive.version>3.0.0.3.0.0.0-SNAPSHOT</hive.version>
         <calcite.version>1.14.0.3.0.0.0-SNAPSHOT</calcite.version>
         <scala.version>2.11.12</scala.version>
-        <janus.version>0.3.1</janus.version>
 
         <json.version>3.2.11</json.version>
         <log4j.version>1.2.17</log4j.version>
