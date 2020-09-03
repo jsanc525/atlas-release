@@ -733,23 +733,30 @@ public class EntityGraphRetriever {
             LOG.debug("Mapping system attributes for type {}", entity.getTypeName());
         }
 
-        entity.setGuid(getGuid(entityVertex));
-        entity.setTypeName(getTypeName(entityVertex));
-        entity.setStatus(GraphHelper.getStatus(entityVertex));
-        entity.setVersion(GraphHelper.getVersion(entityVertex));
+        try {
+            if (entityVertex != null) {
+                entity.setGuid(getGuid(entityVertex));
+                entity.setTypeName(getTypeName(entityVertex));
+                entity.setStatus(GraphHelper.getStatus(entityVertex));
+                entity.setVersion(GraphHelper.getVersion(entityVertex));
 
-        entity.setCreatedBy(GraphHelper.getCreatedByAsString(entityVertex));
-        entity.setUpdatedBy(GraphHelper.getModifiedByAsString(entityVertex));
+                entity.setCreatedBy(GraphHelper.getCreatedByAsString(entityVertex));
+                entity.setUpdatedBy(GraphHelper.getModifiedByAsString(entityVertex));
 
-        entity.setCreateTime(new Date(GraphHelper.getCreatedTime(entityVertex)));
-        entity.setUpdateTime(new Date(GraphHelper.getModifiedTime(entityVertex)));
+                entity.setCreateTime(new Date(GraphHelper.getCreatedTime(entityVertex)));
+                entity.setUpdateTime(new Date(GraphHelper.getModifiedTime(entityVertex)));
 
-        entity.setHomeId(GraphHelper.getHomeId(entityVertex));
+                entity.setHomeId(GraphHelper.getHomeId(entityVertex));
 
-        entity.setIsProxy(GraphHelper.isProxy(entityVertex));
-        entity.setIsIncomplete(isEntityIncomplete(entityVertex));
+                entity.setIsProxy(GraphHelper.isProxy(entityVertex));
+                entity.setIsIncomplete(isEntityIncomplete(entityVertex));
 
-        entity.setProvenanceType(GraphHelper.getProvenanceType(entityVertex));
+                entity.setProvenanceType(GraphHelper.getProvenanceType(entityVertex));
+            }
+
+        } catch (Throwable t) {
+            LOG.warn("Got exception while mapping system attributes for type {} : ", entity.getTypeName(), t);
+        }
 
         return entity;
     }
