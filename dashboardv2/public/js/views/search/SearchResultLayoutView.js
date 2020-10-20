@@ -575,11 +575,20 @@ define(['require',
                     that.$(".ellipsis .inputAssignTag").hide();
                     that.renderBreadcrumb();
                     table.trigger("grid:refresh"); /*Event fire when table rendered*/
-                    tableDragger(document.querySelector(".colSort")).on('drop', function(from, to, el) {
-                        that.columnOrder = that.getColumnOrder(el.querySelectorAll('th.renderable'));
-                        table.trigger("grid:refresh:update");
-                        that.triggerUrl();
-                    });
+                    if (that.isDisable !== true) {
+                        if (tableDragger) {
+                            if (typeof tableDragger !== "function" && typeof tableDragger.default === "function") {
+                                tableDragger = tableDragger.default;
+                            }
+                            if (typeof tableDragger === "function") {
+                                tableDragger(document.querySelector(".colSort")).on('drop', function(from, to, el) {
+                                    that.columnOrder = that.getColumnOrder(el.querySelectorAll('th.renderable'));
+                                    table.trigger("grid:refresh:update");
+                                    that.triggerUrl();
+                                });
+                            }
+                        }
+                    }
                     that.checkTableFetch();
                 });
             },
