@@ -220,41 +220,6 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
         return skipHiveColumnLineageHive20633InputsThreshold;
     }
 
-    public PreprocessAction getPreprocessActionForHiveTable(String qualifiedName) {
-        PreprocessAction ret = PreprocessAction.NONE;
-
-        if (qualifiedName != null && (CollectionUtils.isNotEmpty(hiveTablesToIgnore) || CollectionUtils.isNotEmpty(hiveTablesToPrune))) {
-            ret = hiveTablesCache.get(qualifiedName);
-
-            if (ret == null) {
-                if (isMatch(qualifiedName, hiveTablesToIgnore)) {
-                    ret = PreprocessAction.IGNORE;
-                } else if (isMatch(qualifiedName, hiveTablesToPrune)) {
-                    ret = PreprocessAction.PRUNE;
-                } else {
-                    ret = PreprocessAction.NONE;
-                }
-
-                hiveTablesCache.put(qualifiedName, ret);
-            }
-        }
-
-        return ret;
-    }
-
-    private boolean isMatch(String name, List<Pattern> patterns) {
-        boolean ret = false;
-
-        for (Pattern p : patterns) {
-            if (p.matcher(name).matches()) {
-                ret = true;
-
-                break;
-            }
-        }
-
-        return ret;
-    }
     public  List getIgnoreDummyDatabaseName() {
         return ignoreDummyDatabaseName;
     }
