@@ -70,9 +70,6 @@ public class HiveHook extends AtlasHook implements ExecuteWithHookContext {
 
     private static final boolean                       skipHiveColumnLineageHive20633;
     private static final int                           skipHiveColumnLineageHive20633InputsThreshold;
-    private static final List<Pattern>                 hiveTablesToIgnore = new ArrayList<>();
-    private static final List<Pattern>                 hiveTablesToPrune  = new ArrayList<>();
-    private static final Map<String, PreprocessAction> hiveTablesCache;
     private static final List    ignoreDummyDatabaseName;
     private static final List    ignoreDummyTableName;
     private static final String  ignoreValuesTmpTableNamePrefix;
