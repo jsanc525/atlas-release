@@ -546,16 +546,16 @@
         <jetty.version>9.3.14.v20161028</jetty.version>
         <jetty.jsp.version>9.2.12.v20150709</jetty.jsp.version>
         <jersey.version>1.19</jersey.version>
-        <hadoop.version>3.0.0.3.0.0.0-SNAPSHOT</hadoop.version>
-        <hbase.version>2.0.0.3.0.0.0-SNAPSHOT</hbase.version>
+        <hadoop.version>3.1.2-SNAPSHOT</hadoop.version>
+        <hbase.version>2.0.0.3.0.1.0-SNAPSHOT</hbase.version>
         <solr.version>6.6.1</solr.version>
         <kafka.version>1.0.0</kafka.version>
         <jsr.version>1.1</jsr.version>
         <elasticsearch.version>5.6.4</elasticsearch.version>
         <kafka.scala.binary.version>2.11</kafka.scala.binary.version>
         <curator.version>4.0.1</curator.version>
-        <zookeeper.version>3.4.6.3.0.0.0-SNAPSHOT</zookeeper.version>
-        <hive.version>3.0.0.3.0.0.0-SNAPSHOT</hive.version>
+        <zookeeper.version>3.4.6</zookeeper.version>
+        <hive.version>3.1.0.3.1.4.0-315</hive.version>
         <calcite.version>1.14.0.3.0.0.0-SNAPSHOT</calcite.version>
         <scala.version>2.11.12</scala.version>
         <janus.version>0.3.0</janus.version>
@@ -767,14 +767,14 @@
     <repositories>
         <repository>
             <id>central</id>
-            <url>http://repo1.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
         </repository>
         <repository>
             <id>hortonworks.repo</id>
-            <url>http://repo.hortonworks.com/content/repositories/releases</url>
+            <url>https://repo.hortonworks.com/content/repositories/releases</url>
             <name>Hortonworks Repo</name>
             <snapshots>
                 <enabled>false</enabled>
@@ -809,7 +809,7 @@
         <repository>
             <id>typesafe</id>
             <name>Typesafe Repository</name>
-            <url>http://repo.typesafe.com/typesafe/releases/</url>
+            <url>https://repo.typesafe.com/typesafe/releases/</url>
         </repository>
     </repositories>
 
